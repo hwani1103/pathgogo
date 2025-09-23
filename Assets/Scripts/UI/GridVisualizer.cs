@@ -75,8 +75,8 @@ public class GridVisualizer : MonoBehaviour
     {
         Vector3 localPos = worldPosition - gridOrigin;
         return new Vector3Int(
-            Mathf.RoundToInt(localPos.x / cellSize),
-            Mathf.RoundToInt(localPos.y / cellSize),
+            Mathf.FloorToInt(localPos.x / cellSize),  // RoundToInt ¡æ FloorToInt
+            Mathf.FloorToInt(localPos.y / cellSize),  // RoundToInt ¡æ FloorToInt
             0
         );
     }

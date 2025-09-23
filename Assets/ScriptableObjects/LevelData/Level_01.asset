@@ -21,12 +21,12 @@ MonoBehaviour:
   characters:
   - characterId: A
     startPosition: {x: 0, y: 9, z: 0}
-    maxSelections: 3
+    maxSelections: 5
     characterColor: {r: 1, g: 0.40164852, b: 0.0141509175, a: 1}
     assignedGoalIndex: 0
   - characterId: B
     startPosition: {x: 0, y: 5, z: 0}
-    maxSelections: 3
+    maxSelections: 5
     characterColor: {r: 0, g: 0.2264151, b: 0.09500556, a: 1}
     assignedGoalIndex: 0
   goals:

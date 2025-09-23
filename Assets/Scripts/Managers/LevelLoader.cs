@@ -3,6 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// LevelData를 읽어서 Scene에 캐릭터와 목적지를 배치하는 시스템
+/// 새로운 아키텍처와의 연동을 위해 수정됨
 /// </summary>
 public class LevelLoader : MonoBehaviour
 {
@@ -24,9 +25,19 @@ public class LevelLoader : MonoBehaviour
     // 참조
     private GridVisualizer gridVisualizer;
 
+    // 새로운 시스템들에 대한 참조
+    private PathValidator pathValidator;
+    private CollisionDetector collisionDetector;
+    private MovementSimulator movementSimulator;
+
     void Awake()
     {
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+
+        // 새로운 시스템들 찾기
+        pathValidator = FindFirstObjectByType<PathValidator>();
+        collisionDetector = FindFirstObjectByType<CollisionDetector>();
+        movementSimulator = FindFirstObjectByType<MovementSimulator>();
 
         // 부모 오브젝트가 없으면 생성
         if (charactersParent == null)
@@ -66,6 +77,9 @@ public class LevelLoader : MonoBehaviour
 
         currentLevelData = levelData;
 
+        // 새로운 시스템들에 레벨 데이터 전달
+        NotifySystemsOfLevelData();
+
         // GridVisualizer 설정 업데이트
         UpdateGridVisualizerSettings();
 
@@ -80,6 +94,32 @@ public class LevelLoader : MonoBehaviour
 
         Debug.Log($"Level {levelData.levelNumber} loaded successfully!");
         LogLevelStatus();
+    }
+
+    /// <summary>
+    /// 새로운 시스템들에 레벨 데이터 전달
+    /// </summary>
+    private void NotifySystemsOfLevelData()
+    {
+        if (pathValidator != null)
+        {
+            pathValidator.SetLevelData(currentLevelData);
+        }
+
+        if (movementSimulator != null)
+        {
+            movementSimulator.SetLevelData(currentLevelData);
+        }
+
+        // CollisionDetector는 다른 시스템들을 통해 간접적으로 데이터를 받음
+    }
+
+    /// <summary>
+    /// 현재 레벨 데이터 반환 (다른 시스템에서 사용)
+    /// </summary>
+    public LevelData GetCurrentLevelData()
+    {
+        return currentLevelData;
     }
 
     /// <summary>
@@ -111,13 +151,20 @@ public class LevelLoader : MonoBehaviour
     {
         if (gridVisualizer == null) return;
 
-        // GridVisualizer의 설정을 직접 업데이트하려면 public 필드나 메서드 필요
-        // 현재는 수동으로 설정하도록 안내
+        // 수동으로 설정하도록 안내 (GridVisualizer에 public 설정 메서드가 있다면 여기서 호출)
         Debug.Log($"Please update GridVisualizer settings:");
         Debug.Log($"Grid Width: {currentLevelData.gridWidth}");
         Debug.Log($"Grid Height: {currentLevelData.gridHeight}");
         Debug.Log($"Cell Size: {currentLevelData.cellSize}");
         Debug.Log($"Grid Origin: {currentLevelData.gridOrigin}");
+
+        // GridVisualizer에 설정 업데이트 메서드가 있다면 주석 해제
+        // gridVisualizer.UpdateGridSettings(
+        //     currentLevelData.gridWidth, 
+        //     currentLevelData.gridHeight,
+        //     currentLevelData.cellSize,
+        //     currentLevelData.gridOrigin
+        // );
     }
 
     /// <summary>
@@ -163,6 +210,8 @@ public class LevelLoader : MonoBehaviour
 
             spawnedCharacters.Add(characterController);
         }
+
+        Debug.Log($"Spawned {spawnedCharacters.Count} characters");
     }
 
     /// <summary>
@@ -210,6 +259,8 @@ public class LevelLoader : MonoBehaviour
 
             spawnedGoals.Add(goalController);
         }
+
+        Debug.Log($"Spawned {spawnedGoals.Count} goals");
     }
 
     /// <summary>
@@ -241,6 +292,8 @@ public class LevelLoader : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log("Character-Goal assignments completed");
     }
 
     /// <summary>
@@ -251,6 +304,7 @@ public class LevelLoader : MonoBehaviour
         Debug.Log($"=== Level Status ===");
         Debug.Log($"Characters spawned: {spawnedCharacters.Count}");
         Debug.Log($"Goals spawned: {spawnedGoals.Count}");
+        Debug.Log($"Systems connected: PathValidator={pathValidator != null}, CollisionDetector={collisionDetector != null}, MovementSimulator={movementSimulator != null}");
 
         foreach (var character in spawnedCharacters)
         {
@@ -295,6 +349,47 @@ public class LevelLoader : MonoBehaviour
         return spawnedGoals.Find(g => g.GetGridPosition() == gridPosition);
     }
 
+    /// <summary>
+    /// 캐릭터 ID로 캐릭터 찾기
+    /// </summary>
+    public CharacterController GetCharacterById(string characterId)
+    {
+        return spawnedCharacters.Find(c => c.GetCharacterId() == characterId);
+    }
+
+    /// <summary>
+    /// 모든 캐릭터의 현재 상태 확인 (디버깅용)
+    /// </summary>
+    public void LogAllCharacterStates()
+    {
+        Debug.Log("=== All Character States ===");
+        foreach (var character in spawnedCharacters)
+        {
+            Vector3Int pos = character.GetCurrentGridPosition();
+            Debug.Log($"{character.GetCharacterId()}: Position({pos}), Remaining({character.GetRemainingSelections()}), Moving({character.IsMoving()})");
+        }
+    }
+
+    /// <summary>
+    /// 레벨 완료 조건 검사 (나중에 구현)
+    /// </summary>
+    public bool CheckLevelComplete()
+    {
+        // TODO: 모든 캐릭터가 목적지에 도달했는지 확인하는 로직
+        return false;
+    }
+
+    /// <summary>
+    /// 레벨 리셋 (테스트용)
+    /// </summary>
+    public void ResetLevel()
+    {
+        if (currentLevelData != null)
+        {
+            LoadLevel(currentLevelData);
+        }
+    }
+
 #if UNITY_EDITOR
     [ContextMenu("Reload Current Level")]
     public void ReloadCurrentLevel()
@@ -307,6 +402,23 @@ public class LevelLoader : MonoBehaviour
         {
             Debug.LogWarning("No current level data to reload!");
         }
+    }
+
+    [ContextMenu("Log All Character States")]
+    public void EditorLogAllCharacterStates()
+    {
+        LogAllCharacterStates();
+    }
+
+    [ContextMenu("Test System Connections")]
+    public void TestSystemConnections()
+    {
+        Debug.Log("=== System Connection Test ===");
+        Debug.Log($"GridVisualizer: {gridVisualizer != null}");
+        Debug.Log($"PathValidator: {pathValidator != null}");
+        Debug.Log($"CollisionDetector: {collisionDetector != null}");
+        Debug.Log($"MovementSimulator: {movementSimulator != null}");
+        Debug.Log($"Current Level Data: {currentLevelData != null}");
     }
 #endif
 }
