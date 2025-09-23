@@ -100,22 +100,28 @@ public class TouchInputManager : MonoBehaviour
 
         if (touchedCharacter != null)
         {
-            // 캐릭터 선택 가능성 검사
-            if (CanSelectCharacter(touchedCharacter))
+            // 이미 선택된 캐릭터를 다시 터치하면 토글
+            if (selectedCharacter == touchedCharacter)
             {
-                SelectCharacter(touchedCharacter);
+                // 선택 해제
+                DeselectCharacter();
+                return;
             }
-            else
+
+            // 경로 선택 중에 다른 캐릭터 터치하면 무시
+            if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
             {
-                ShowCharacterSelectionBlocked(touchedCharacter);
+                return; // 무시
             }
+
+            // 새로운 캐릭터 선택 (또는 처음 선택)
+            SelectCharacter(touchedCharacter);
         }
         else
         {
-            // 캐릭터가 선택된 상태에서 빈 공간을 터치한 경우
+            // 경로 선택 처리
             if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
             {
-                // 경로 선택 처리 (PathSelectionManager에 위임)
                 pathSelectionManager.SelectPosition(gridPosition);
             }
             else
@@ -127,7 +133,6 @@ public class TouchInputManager : MonoBehaviour
             }
         }
     }
-
     /// <summary>
     /// 특정 위치에서 캐릭터 찾기 (검증 강화)
     /// </summary>
@@ -137,7 +142,7 @@ public class TouchInputManager : MonoBehaviour
 
         // 방법 1: 그리드 좌표로 정확히 찾기 (우선순위)
         CharacterController characterAtGrid = levelLoader.GetCharacterAt(gridPosition);
-        if (characterAtGrid != null)
+        if (characterAtGrid != null && !characterAtGrid.IsCompleted()) // 완료된 캐릭터는 선택 불가
         {
             if (showDebugInfo)
             {
@@ -153,6 +158,8 @@ public class TouchInputManager : MonoBehaviour
 
         foreach (var character in allCharacters)
         {
+            if (character.IsCompleted()) continue; // 완료된 캐릭터는 제외
+
             float distance = Vector3.Distance(worldPosition, character.transform.position);
             if (distance <= touchRadius && distance < closestDistance)
             {
@@ -168,7 +175,6 @@ public class TouchInputManager : MonoBehaviour
 
         return closestCharacter;
     }
-
     /// <summary>
     /// 캐릭터 선택 가능 여부 확인
     /// </summary>

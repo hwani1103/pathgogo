@@ -18,6 +18,8 @@ public class CharacterController : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private bool isSelected = false;
 
+    [Header("Completion State")]
+    [SerializeField] private bool isCompleted = false;
     // 상태 관리
     private bool isMoving = false;
     private int remainingSelections;
@@ -58,7 +60,49 @@ public class CharacterController : MonoBehaviour
         SetupCharacter();
         UpdateVisual();
     }
+    /// <summary>
+    /// 경로 완성 상태 설정
+    /// </summary>
+    public void SetCompleted(bool completed)
+    {
+        isCompleted = completed;
+        UpdateCompletedVisual();
+    }
 
+    /// <summary>
+    /// 완성 상태 확인
+    /// </summary>
+    public bool IsCompleted()
+    {
+        return isCompleted;
+    }
+
+
+    /// <summary>
+    /// 완성된 캐릭터의 시각적 표현 업데이트
+    /// </summary>
+    /// <summary>
+    /// 완성된 캐릭터의 시각적 표현 업데이트
+    /// </summary>
+    private void UpdateCompletedVisual()
+    {
+        if (spriteRenderer == null) return;
+
+        if (isCompleted)
+        {
+            // 반투명하게 변경
+            Color color = spriteRenderer.color;
+            color.a = 0.5f;
+            spriteRenderer.color = color;
+        }
+        else
+        {
+            // 원래 투명도로 복원
+            Color color = spriteRenderer.color;
+            color.a = 1f;
+            spriteRenderer.color = color;
+        }
+    }
     /// <summary>
     /// 캐릭터 기본 설정 적용
     /// </summary>
@@ -84,9 +128,22 @@ public class CharacterController : MonoBehaviour
     /// <summary>
     /// 시각적 표현 업데이트 (선택 상태 등)
     /// </summary>
+    /// <summary>
+    /// 시각적 표현 업데이트 (선택 상태 등)
+    /// </summary>
     private void UpdateVisual()
     {
         if (spriteRenderer == null) return;
+
+        // 완료된 캐릭터는 반투명 상태 유지
+        if (isCompleted)
+        {
+            Color color = characterColor;
+            color.a = 0.5f;
+            spriteRenderer.color = color;
+            transform.localScale = Vector3.one; // 크기 변화 없음
+            return;
+        }
 
         // 선택된 상태일 때 더 밝게 표시
         if (isSelected)
@@ -169,6 +226,14 @@ public class CharacterController : MonoBehaviour
     /// <summary>
     /// 이동 중인지 확인
     /// </summary>
+    /// 
+    /// /// <summary>
+    /// 원래 최대 선택 횟수 반환
+    /// </summary>
+    public int GetMaxSelections()
+    {
+        return maxSelections;
+    }
     public bool IsMoving()
     {
         return isMoving;

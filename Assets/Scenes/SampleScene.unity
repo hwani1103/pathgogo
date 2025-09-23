@@ -204,7 +204,7 @@ MonoBehaviour:
   availablePathColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   selectedPathColor: {r: 0, g: 1, b: 0, a: 1}
   invalidPathColor: {r: 1, g: 0, b: 0, a: 1}
-  lineWidth: 0.3
+  lineWidth: 0.1
   flagPrefab: {fileID: 8559268373791590828, guid: 7d48fbad6533b95488078f3193c75fe6, type: 3}
   flagScale: 0.5
   showCollisionWarnings: 1

@@ -73,10 +73,21 @@ public class PathValidator : MonoBehaviour
     {
         if (levelLoader == null) return false;
 
-        // 다른 캐릭터가 있는지 확인
+        // 모든 캐릭터 위치는 장애물 (본인 포함)
         var characterAtPosition = levelLoader.GetCharacterAt(position);
-        if (characterAtPosition != null && characterAtPosition != excludeCharacter)
+        if (characterAtPosition != null)
             return true;
+
+        // 다른 목적지가 있는지 확인 (본인 목적지가 아닌 경우)
+        var goalAtPosition = levelLoader.GetGoalAt(position);
+        if (goalAtPosition != null && excludeCharacter != null)
+        {
+            // 현재 캐릭터가 사용할 수 없는 목적지라면 장애물로 처리
+            if (!goalAtPosition.CanUseGoal(excludeCharacter.GetCharacterId()))
+            {
+                return true;
+            }
+        }
 
         // 타일이 없으면 장애물로 간주
         if (!HasTileAt(position))
