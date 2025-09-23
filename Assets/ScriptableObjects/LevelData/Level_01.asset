@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47dedab609904374aa4be6996adcb9f3, type: 3}
+  m_Name: Level_01
+  m_EditorClassIdentifier: 
+  levelNumber: 1
+  levelName: Level 1
+  gridWidth: 10
+  gridHeight: 5
+  cellSize: 1
+  gridOrigin: {x: 0, y: 5, z: 0}
+  characters:
+  - characterId: A
+    startPosition: {x: 0, y: 9, z: 0}
+    maxSelections: 3
+    characterColor: {r: 1, g: 0.40164852, b: 0.0141509175, a: 1}
+    assignedGoalIndex: 0
+  - characterId: B
+    startPosition: {x: 0, y: 5, z: 0}
+    maxSelections: 3
+    characterColor: {r: 0, g: 0.2264151, b: 0.09500556, a: 1}
+    assignedGoalIndex: 0
+  goals:
+  - position: {x: 9, y: 9, z: 0}
+    goalType: 0
+    assignedCharacters: []
+    goalColor: {r: 0.6205484, g: 0.0047169924, b: 1, a: 1}
+  - position: {x: 9, y: 6, z: 0}
+    goalType: 0
+    assignedCharacters: []
+    goalColor: {r: 0.54509807, g: 0.972549, b: 0.7287143, a: 1}
+  walkableTiles:
+  - position: {x: 0, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 0, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 0, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 0, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 0, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 1, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 1, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 1, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 1, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 1, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 2, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 2, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 2, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 2, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 2, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 3, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 3, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 3, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 3, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 3, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 4, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 4, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 4, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 4, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 4, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 5, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 5, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 5, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 5, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 5, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 6, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 6, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 6, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 6, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 6, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 7, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 7, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 7, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 7, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 7, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 8, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 8, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 8, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 8, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 8, y: 9, z: 0}
+    isWalkable: 1
+  - position: {x: 9, y: 5, z: 0}
+    isWalkable: 1
+  - position: {x: 9, y: 6, z: 0}
+    isWalkable: 1
+  - position: {x: 9, y: 7, z: 0}
+    isWalkable: 1
+  - position: {x: 9, y: 8, z: 0}
+    isWalkable: 1
+  - position: {x: 9, y: 9, z: 0}
+    isWalkable: 1
+  moveSpeed: 2
+  showGridInGame: 1
