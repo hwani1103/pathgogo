@@ -141,37 +141,6 @@ public class GamePiece : MonoBehaviour
         UpdateVisual();
     }
 
-    /// <summary>
-    /// 현재 위치에서 특정 방향으로 이동 가능한지 확인
-    /// </summary>
-    public bool CanMoveToDirection(Vector3Int direction)
-    {
-        if (remainingSelections <= 0) return false;
-        if (isMoving) return false;
-
-        Vector3Int targetPosition = currentGridPosition + direction;
-
-        // 그리드 범위 확인
-        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// 특정 위치로 이동 가능한지 확인
-    /// </summary>
-    public bool CanMoveToPosition(Vector3Int targetPosition)
-    {
-        if (remainingSelections <= 0) return false;
-        if (isMoving) return false;
-
-        // 그리드 범위 확인
-        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
-            return false;
-
-        return true;
-    }
 
     /// <summary>
     /// 남은 선택 횟수 반환

@@ -77,59 +77,37 @@ public class TouchInputManager : MonoBehaviour
     {
         if (mainCamera == null || gridVisualizer == null) return;
 
-        // 스크린 좌표를 월드 좌표로 변환
         Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -mainCamera.transform.position.z));
-        worldPosition.z = 0; // 2D 게임이므로 Z는 0
+        worldPosition.z = 0;
 
-        if (showTouchPosition)
-        {
-            Debug.Log($"Touch at screen: {screenPosition}, world: {worldPosition}");
-        }
-
-        // GridVisualizer를 사용한 정확한 좌표 변환
         Vector3Int gridPosition = gridVisualizer.WorldToGridPosition(worldPosition);
-
-        if (showDebugInfo)
-        {
-            Debug.Log($"World: {worldPosition} → Grid: {gridPosition}");
-            Debug.Log($"Grid valid: {gridVisualizer.IsValidGridPosition(gridPosition)}");
-        }
-
-        // 터치한 위치에서 캐릭터 찾기
         GamePiece touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
 
-        if (touchedCharacter != null)
-        {
-            // 이미 선택된 캐릭터를 다시 터치하면 토글
+
+        if(touchedCharacter != null)
+{
             if (selectedCharacter == touchedCharacter)
             {
-                // 선택 해제
                 DeselectCharacter();
                 return;
             }
 
-            // 경로 선택 중에 다른 캐릭터 터치하면 무시
-            if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
+            // 경로 선택 중이고 완료되지 않은 캐릭터가 선택되어 있을 때만 차단
+            if (selectedCharacter != null &&
+                !selectedCharacter.IsCompleted() &&
+                pathSelectionManager != null &&
+                pathSelectionManager.IsSelectingPath())
             {
-                return; // 무시
+                return; // 차단
             }
 
-            // 새로운 캐릭터 선택 (또는 처음 선택)
             SelectCharacter(touchedCharacter);
         }
         else
         {
-            // 경로 선택 처리
             if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
             {
                 pathSelectionManager.SelectPosition(gridPosition);
-            }
-            else
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"No character found at touch position. Grid position: {gridPosition}");
-                }
             }
         }
     }

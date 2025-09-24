@@ -86,7 +86,6 @@ public class CharacterUIManager : MonoBehaviour
             {
                 HideCharacterInfo();
             }
-
         }
 
         // 현재 캐릭터가 완료되었으면 UI 숨기기

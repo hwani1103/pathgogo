@@ -144,6 +144,17 @@ public class PathSelectionManager : MonoBehaviour
             pathValidator.HasObstacleInPath(fromPos, toPos, currentCharacter))
             return false;
 
+        // 현재 표시된 노란 라인 범위 내에서만 선택 가능하도록
+        Vector3Int direction = new Vector3Int(
+            toPos.x > fromPos.x ? 1 : (toPos.x < fromPos.x ? -1 : 0),
+            toPos.y > fromPos.y ? 1 : (toPos.y < fromPos.y ? -1 : 0),
+            0
+        );
+
+        var validPositions = pathValidator.GetValidPositionsInDirection(fromPos, direction, currentCharacter);
+        if (!validPositions.Contains(toPos))
+            return false;
+
         int remaining = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
 
         // 마지막 선택일 때는 반드시 Goal이어야 함
@@ -152,21 +163,54 @@ public class PathSelectionManager : MonoBehaviour
             return pathValidator.IsGoalPosition(toPos, currentCharacter);
         }
 
-        // 마지막-1 선택일 때는 Goal과 직선상에 있어야 함 (추가 필요)
+        // 마지막-1 선택일 때는 Goal과 직선상에 있어야 함
         if (remaining == 2)
         {
             var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
             foreach (var goal in availableGoals)
             {
                 Vector3Int goalPos = goal.GetGridPosition();
-                // Goal과 직선상에 있고 경로에 장애물이 없으면 허용
                 if ((toPos.x == goalPos.x || toPos.y == goalPos.y) &&
                     !pathValidator.HasObstacleInPath(toPos, goalPos, currentCharacter))
                 {
                     return true;
                 }
             }
-            return false; // 어떤 Goal과도 직선상에 있지 않으면 거부
+            return false;
+        }
+
+        // 마지막-2 선택일 때 추가 검증
+        if (remaining == 3)
+        {
+            // 해당 위치에서 한 번 더 이동했을 때 Goal과 직선상인 유효한 위치가 있는지 확인
+            bool canReachGoalLine = false;
+            var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
+
+            Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
+
+            foreach (var dir in directions)
+            {
+                var nextPositions = pathValidator.GetValidPositionsInDirection(toPos, dir, currentCharacter);
+
+                foreach (var nextPos in nextPositions)
+                {
+                    // 다음 위치가 Goal과 직선상에 있는지 확인
+                    foreach (var goal in availableGoals)
+                    {
+                        Vector3Int goalPos = goal.GetGridPosition();
+                        if ((nextPos.x == goalPos.x || nextPos.y == goalPos.y) &&
+                            !pathValidator.HasObstacleInPath(nextPos, goalPos, currentCharacter))
+                        {
+                            canReachGoalLine = true;
+                            break;
+                        }
+                    }
+                    if (canReachGoalLine) break;
+                }
+                if (canReachGoalLine) break;
+            }
+
+            if (!canReachGoalLine) return false;
         }
 
         return true;
@@ -395,23 +439,40 @@ public class PathSelectionManager : MonoBehaviour
     {
         if (currentCharacter == null) return;
 
-        // 가능한 경로 라인들 숨기기
         ClearAvailablePathLines();
-
-        // 최종 경로 표시
         ShowFinalPath();
-
-        // 경로 저장 (동시 이동용)
         SaveCompletedPath();
 
-        // 캐릭터를 완료 상태로 변경
+        // 완료 즉시 해당 캐릭터의 Goal 크기 복원
+        if (levelLoader != null)
+        {
+            var allGoals = levelLoader.GetSpawnedGoals();
+            foreach (var goal in allGoals)
+            {
+                if (goal.CanUseGoal(currentCharacter.GetCharacterId()))
+                {
+                    goal.transform.localScale = Vector3.one;
+                }
+            }
+        }
+
         SetCharacterCompleted(currentCharacter);
 
-        // 1초 후 정리 및 해제
-        Invoke(nameof(CompleteCleanup), 1f);
+        // 즉시 선택 상태 정리
+        currentCharacter = null;
+        currentPath.Clear();
 
-        pathValidator.DebugLogPath(currentPath, $"Completed path for {currentCharacter.GetCharacterId()}");
+        // 시각적 정리만 1초 후
+        Invoke(nameof(VisualOnlyCleanup), 1f);
     }
+
+    private void VisualOnlyCleanup()
+    {
+        ClearFinalPath();
+        ClearFlags();
+
+    }
+
     private void CompleteCleanup()
     {
         // Flag들과 최종 경로 라인 정리
@@ -556,7 +617,7 @@ public class PathSelectionManager : MonoBehaviour
     /// </summary>
     public bool IsSelectingPath()
     {
-        return currentCharacter != null;
+        return currentCharacter != null && currentPath.Count > 0;
     }
 
     /// <summary>
