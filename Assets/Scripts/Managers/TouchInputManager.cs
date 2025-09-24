@@ -20,7 +20,7 @@ public class TouchInputManager : MonoBehaviour
     private Camera mainCamera;
 
     // 선택된 캐릭터
-    private CharacterController selectedCharacter;
+    private GamePiece selectedCharacter;
 
     // 참조
     private LevelLoader levelLoader;
@@ -96,7 +96,7 @@ public class TouchInputManager : MonoBehaviour
         }
 
         // 터치한 위치에서 캐릭터 찾기
-        CharacterController touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
+        GamePiece touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
 
         if (touchedCharacter != null)
         {
@@ -136,12 +136,12 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 특정 위치에서 캐릭터 찾기 (검증 강화)
     /// </summary>
-    private CharacterController FindCharacterAtPosition(Vector3 worldPosition, Vector3Int gridPosition)
+    private GamePiece FindCharacterAtPosition(Vector3 worldPosition, Vector3Int gridPosition)
     {
         if (levelLoader == null) return null;
 
         // 방법 1: 그리드 좌표로 정확히 찾기 (우선순위)
-        CharacterController characterAtGrid = levelLoader.GetCharacterAt(gridPosition);
+        GamePiece characterAtGrid = levelLoader.GetCharacterAt(gridPosition);
         if (characterAtGrid != null && !characterAtGrid.IsCompleted()) // 완료된 캐릭터는 선택 불가
         {
             if (showDebugInfo)
@@ -153,7 +153,7 @@ public class TouchInputManager : MonoBehaviour
 
         // 방법 2: 터치 반경 내에서 찾기 (관대한 터치)
         var allCharacters = levelLoader.GetSpawnedCharacters();
-        CharacterController closestCharacter = null;
+        GamePiece closestCharacter = null;
         float closestDistance = float.MaxValue;
 
         foreach (var character in allCharacters)
@@ -178,7 +178,7 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 캐릭터 선택 가능 여부 확인
     /// </summary>
-    private bool CanSelectCharacter(CharacterController character)
+    private bool CanSelectCharacter(GamePiece character)
     {
         if (character == null) return false;
 
@@ -213,7 +213,7 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 캐릭터 선택이 차단되었을 때의 피드백
     /// </summary>
-    private void ShowCharacterSelectionBlocked(CharacterController character)
+    private void ShowCharacterSelectionBlocked(GamePiece character)
     {
         if (Application.isMobilePlatform)
         {
@@ -229,7 +229,7 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 선택 차단 시각 효과
     /// </summary>
-    private System.Collections.IEnumerator ShowBlockedSelectionEffect(CharacterController character)
+    private System.Collections.IEnumerator ShowBlockedSelectionEffect(GamePiece character)
     {
         if (character == null) yield break;
 
@@ -259,7 +259,7 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 캐릭터 선택 처리
     /// </summary>
-    private void SelectCharacter(CharacterController character)
+    private void SelectCharacter(GamePiece character)
     {
         // 이미 선택된 캐릭터와 같다면 선택 해제
         if (selectedCharacter == character)
@@ -311,14 +311,13 @@ public class TouchInputManager : MonoBehaviour
             selectedCharacter = null;
         }
 
-        // PathSelectionManager에게 경로 선택 종료 요청
         if (pathSelectionManager != null)
         {
             pathSelectionManager.EndPathSelection();
         }
 
-        // Goal 하이라이트 해제
         ClearGoalHighlight();
+
     }
 
     /// <summary>
@@ -328,14 +327,14 @@ public class TouchInputManager : MonoBehaviour
     {
         if (selectedCharacter == null || levelLoader == null) return;
 
-        // 모든 Goal 하이라이트 해제
+        // 모든 Goal을 기본 크기(1.0f)로 복원
         var allGoals = levelLoader.GetSpawnedGoals();
         foreach (var goal in allGoals)
         {
             goal.transform.localScale = Vector3.one;
         }
 
-        // 선택된 캐릭터가 사용할 수 있는 Goal들 하이라이트
+        // 선택된 캐릭터가 사용할 수 있는 Goal만 크게 만들기
         foreach (var goal in allGoals)
         {
             if (goal.CanUseGoal(selectedCharacter.GetCharacterId()))
@@ -355,14 +354,14 @@ public class TouchInputManager : MonoBehaviour
         var allGoals = levelLoader.GetSpawnedGoals();
         foreach (var goal in allGoals)
         {
-            goal.transform.localScale = Vector3.one;
+            goal.transform.localScale = Vector3.one; // 모든 Goal을 기본 크기로
         }
     }
 
     /// <summary>
     /// 현재 선택된 캐릭터 반환
     /// </summary>
-    public CharacterController GetSelectedCharacter()
+    public GamePiece GetSelectedCharacter()
     {
         return selectedCharacter;
     }
@@ -370,7 +369,7 @@ public class TouchInputManager : MonoBehaviour
     /// <summary>
     /// 특정 캐릭터 강제 선택
     /// </summary>
-    public void ForceSelectCharacter(CharacterController character)
+    public void ForceSelectCharacter(GamePiece character)
     {
         if (character != null && CanSelectCharacter(character))
         {

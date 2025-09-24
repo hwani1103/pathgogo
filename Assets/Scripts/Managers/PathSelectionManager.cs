@@ -23,7 +23,7 @@ public class PathSelectionManager : MonoBehaviour
     [SerializeField] private Color collisionWarningColor = Color.red;
 
     // 현재 선택된 캐릭터
-    private CharacterController currentCharacter;
+    private GamePiece currentCharacter;
 
     // 경로 관리
     private List<Vector3Int> currentPath = new List<Vector3Int>();
@@ -68,7 +68,7 @@ public class PathSelectionManager : MonoBehaviour
     /// <summary>
     /// 캐릭터 선택 시 경로 선택 모드 시작
     /// </summary>
-    public void StartPathSelection(CharacterController character)
+    public void StartPathSelection(GamePiece character)
     {
         if (character == null) return;
 
@@ -135,23 +135,41 @@ public class PathSelectionManager : MonoBehaviour
     /// </summary>
     private bool IsValidSelection(Vector3Int fromPos, Vector3Int toPos)
     {
-        // 동서남북 직선상에 있는지 확인
-        if (fromPos.x != toPos.x && fromPos.y != toPos.y)
-        {
-            Debug.Log("Invalid: Not cardinal direction");
+        // 기본 검증
+        if (fromPos.x != toPos.x && fromPos.y != toPos.y) return false;
+        if (fromPos == toPos) return false;
+
+        // 경로 유효성 검사
+        if (!pathValidator.IsValidPosition(toPos) ||
+            pathValidator.HasObstacleInPath(fromPos, toPos, currentCharacter))
             return false;
+
+        int remaining = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
+
+        // 마지막 선택일 때는 반드시 Goal이어야 함
+        if (remaining == 1)
+        {
+            return pathValidator.IsGoalPosition(toPos, currentCharacter);
         }
 
-        // 같은 위치가 아닌지 확인
-        if (fromPos == toPos)
+        // 마지막-1 선택일 때는 Goal과 직선상에 있어야 함 (추가 필요)
+        if (remaining == 2)
         {
-            Debug.Log("Invalid: Same position");
-            return false;
+            var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
+            foreach (var goal in availableGoals)
+            {
+                Vector3Int goalPos = goal.GetGridPosition();
+                // Goal과 직선상에 있고 경로에 장애물이 없으면 허용
+                if ((toPos.x == goalPos.x || toPos.y == goalPos.y) &&
+                    !pathValidator.HasObstacleInPath(toPos, goalPos, currentCharacter))
+                {
+                    return true;
+                }
+            }
+            return false; // 어떤 Goal과도 직선상에 있지 않으면 거부
         }
 
-        // PathValidator를 통한 검증
-        return pathValidator.IsValidPosition(toPos) &&
-               !pathValidator.HasObstacleInPath(fromPos, toPos, currentCharacter);
+        return true;
     }
 
     /// <summary>
@@ -187,8 +205,7 @@ public class PathSelectionManager : MonoBehaviour
 
         // PathValidator를 사용하여 해당 방향의 유효한 위치들 가져오기
         List<Vector3Int> pathPositions = pathValidator.GetValidPositionsInDirection(
-            startPos, direction, currentCharacter, 10
-        );
+    startPos, direction, currentCharacter);
 
         Debug.Log($"Before filtering - pathPositions count: {pathPositions.Count}");
 
@@ -401,6 +418,12 @@ public class PathSelectionManager : MonoBehaviour
         ClearFinalPath();
         ClearFlags();
 
+        // Goal 하이라이트도 정리 (추가)
+        if (touchInputManager != null)
+        {
+            touchInputManager.ClearSelection(); // 이것만 추가하면 됨
+        }
+
         // 선택 해제
         currentCharacter = null;
         currentPath.Clear();
@@ -418,7 +441,7 @@ public class PathSelectionManager : MonoBehaviour
     /// <summary>
     /// 캐릭터를 완료 상태로 설정
     /// </summary>
-    private void SetCharacterCompleted(CharacterController character)
+    private void SetCharacterCompleted(GamePiece character)
     {
         character.SetCompleted(true);
     }
@@ -539,7 +562,7 @@ public class PathSelectionManager : MonoBehaviour
     /// <summary>
     /// 현재 선택된 캐릭터 반환
     /// </summary>
-    public CharacterController GetCurrentCharacter()
+    public GamePiece GetCurrentCharacter()
     {
         return currentCharacter;
     }

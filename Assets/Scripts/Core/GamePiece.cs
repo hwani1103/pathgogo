@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 캐릭터의 기본 동작과 상태를 관리하는 컨트롤러
 /// </summary>
-public class CharacterController : MonoBehaviour
+public class GamePiece : MonoBehaviour
 {
     [Header("Character Info")]
     [SerializeField] private string characterId;
@@ -66,7 +66,7 @@ public class CharacterController : MonoBehaviour
     public void SetCompleted(bool completed)
     {
         isCompleted = completed;
-        UpdateCompletedVisual();
+        UpdateVisual();
     }
 
     /// <summary>
@@ -77,32 +77,6 @@ public class CharacterController : MonoBehaviour
         return isCompleted;
     }
 
-
-    /// <summary>
-    /// 완성된 캐릭터의 시각적 표현 업데이트
-    /// </summary>
-    /// <summary>
-    /// 완성된 캐릭터의 시각적 표현 업데이트
-    /// </summary>
-    private void UpdateCompletedVisual()
-    {
-        if (spriteRenderer == null) return;
-
-        if (isCompleted)
-        {
-            // 반투명하게 변경
-            Color color = spriteRenderer.color;
-            color.a = 0.5f;
-            spriteRenderer.color = color;
-        }
-        else
-        {
-            // 원래 투명도로 복원
-            Color color = spriteRenderer.color;
-            color.a = 1f;
-            spriteRenderer.color = color;
-        }
-    }
     /// <summary>
     /// 캐릭터 기본 설정 적용
     /// </summary>

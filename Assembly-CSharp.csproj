@@ -64,12 +64,12 @@
     <Compile Include="Assets\Scripts\Core\GoalController.cs" />
     <Compile Include="Assets\Scripts\Managers\TouchInputManager.cs" />
     <Compile Include="Assets\Scripts\Level\LevelGenerator.cs" />
+    <Compile Include="Assets\Scripts\Core\GamePiece.cs" />
     <Compile Include="Assets\Scripts\Managers\CharacterUIManager.cs" />
     <Compile Include="Assets\Scripts\Level\LevelData.cs" />
     <Compile Include="Assets\Scripts\Core\GoalType.cs" />
     <Compile Include="Assets\Scripts\Core\MovementSimulator.cs" />
     <Compile Include="Assets\Scripts\UI\SafeArea.cs" />
-    <Compile Include="Assets\Scripts\Core\CharacterController.cs" />
     <Compile Include="Assets\Scripts\Core\CollisionDetector.cs" />
     <Compile Include="Assets\Scripts\UI\GridVisualizer.cs" />
     <Compile Include="Assets\PlayerInputActions.cs" />

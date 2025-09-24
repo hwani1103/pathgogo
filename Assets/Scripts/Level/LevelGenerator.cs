@@ -28,9 +28,6 @@ public class LevelGenerator : MonoBehaviour
     [Header("Goal Setup")]
     [SerializeField] private List<GoalSetup> goalSetups = new List<GoalSetup>();
 
-    [Header("Grid Visualization")]
-    [SerializeField] private GridVisualizer gridVisualizer;
-
     [System.Serializable]
     public struct CharacterSetup
     {
@@ -77,10 +74,6 @@ public class LevelGenerator : MonoBehaviour
             if (tilemaps.Length > 0)
                 tilemap = tilemaps[0];
         }
-
-        // GridVisualizer 설정
-        if (gridVisualizer == null)
-            gridVisualizer = GetComponent<GridVisualizer>();
     }
 
 #if UNITY_EDITOR
@@ -119,17 +112,9 @@ public class LevelGenerator : MonoBehaviour
         levelData.moveSpeed = moveSpeed;
         levelData.showGridInGame = showGridInGame;
 
-        // 그리드 설정
-        if (gridVisualizer != null)
-        {
-            levelData.cellSize = grid.cellSize.x; // Grid의 Cell Size 사용
-            levelData.gridOrigin = transform.position;
-        }
-        else
-        {
-            levelData.cellSize = 1f;
-            levelData.gridOrigin = Vector3.zero;
-        }
+        // 그리드 설정 - Grid 컴포넌트에서 직접 가져오기
+        levelData.cellSize = grid != null ? grid.cellSize.x : 1f;
+        levelData.gridOrigin = transform.position;
 
         // Tilemap에서 타일 정보 읽어오기
         ReadTilemapData(levelData);
@@ -319,13 +304,6 @@ public class LevelGenerator : MonoBehaviour
         {
             grid.cellSize = new Vector3(levelData.cellSize, levelData.cellSize, 1f);
             transform.position = levelData.gridOrigin;
-        }
-
-        // GridVisualizer 설정 업데이트
-        if (gridVisualizer != null)
-        {
-            // GridVisualizer의 설정을 LevelData에 맞춰 업데이트
-            // (GridVisualizer에 public property나 method 추가 필요)
         }
 
         Debug.Log($"Level {levelData.levelNumber} 로드 완료: {levelData.levelName}");

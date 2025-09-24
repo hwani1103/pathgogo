@@ -19,7 +19,7 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private Transform goalsParent;
 
     // 런타임에 생성된 오브젝트들
-    private List<CharacterController> spawnedCharacters = new List<CharacterController>();
+    private List<GamePiece> spawnedCharacters = new List<GamePiece>();
     private List<GoalController> spawnedGoals = new List<GoalController>();
 
     // 참조
@@ -193,14 +193,14 @@ public class LevelLoader : MonoBehaviour
 
             GameObject characterObj = Instantiate(characterPrefab, worldPosition, Quaternion.identity, charactersParent);
 
-            // CharacterController 컴포넌트 설정
-            CharacterController characterController = characterObj.GetComponent<CharacterController>();
-            if (characterController == null)
+            // GamePiece 컴포넌트 설정
+            GamePiece GamePiece = characterObj.GetComponent<GamePiece>();
+            if (GamePiece == null)
             {
-                characterController = characterObj.AddComponent<CharacterController>();
+                GamePiece = characterObj.AddComponent<GamePiece>();
             }
 
-            characterController.Initialize(
+            GamePiece.Initialize(
                 characterData.characterId,
                 characterData.startPosition,
                 characterData.maxSelections,
@@ -208,7 +208,7 @@ public class LevelLoader : MonoBehaviour
                 currentLevelData.moveSpeed
             );
 
-            spawnedCharacters.Add(characterController);
+            spawnedCharacters.Add(GamePiece);
         }
 
         Debug.Log($"Spawned {spawnedCharacters.Count} characters");
@@ -320,9 +320,9 @@ public class LevelLoader : MonoBehaviour
     /// <summary>
     /// 생성된 캐릭터 목록 반환
     /// </summary>
-    public List<CharacterController> GetSpawnedCharacters()
+    public List<GamePiece> GetSpawnedCharacters()
     {
-        return new List<CharacterController>(spawnedCharacters);
+        return new List<GamePiece>(spawnedCharacters);
     }
 
     /// <summary>
@@ -336,7 +336,7 @@ public class LevelLoader : MonoBehaviour
     /// <summary>
     /// 특정 위치에 있는 캐릭터 찾기
     /// </summary>
-    public CharacterController GetCharacterAt(Vector3Int gridPosition)
+    public GamePiece GetCharacterAt(Vector3Int gridPosition)
     {
         return spawnedCharacters.Find(c => c.GetCurrentGridPosition() == gridPosition);
     }
@@ -352,7 +352,7 @@ public class LevelLoader : MonoBehaviour
     /// <summary>
     /// 캐릭터 ID로 캐릭터 찾기
     /// </summary>
-    public CharacterController GetCharacterById(string characterId)
+    public GamePiece GetCharacterById(string characterId)
     {
         return spawnedCharacters.Find(c => c.GetCharacterId() == characterId);
     }

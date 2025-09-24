@@ -18,7 +18,7 @@ public class CharacterUIManager : MonoBehaviour
     [SerializeField] private float panelFadeSpeed = 2f;
 
     // 현재 표시 중인 캐릭터
-    private CharacterController currentCharacter;
+    private GamePiece currentCharacter;
 
     // 참조
     private TouchInputManager touchInputManager;
@@ -71,7 +71,7 @@ public class CharacterUIManager : MonoBehaviour
     {
         if (touchInputManager == null) return;
 
-        CharacterController selectedCharacter = touchInputManager.GetSelectedCharacter();
+        GamePiece selectedCharacter = touchInputManager.GetSelectedCharacter();
 
         // 선택된 캐릭터가 변경되었을 때
         if (currentCharacter != selectedCharacter)
@@ -86,6 +86,7 @@ public class CharacterUIManager : MonoBehaviour
             {
                 HideCharacterInfo();
             }
+
         }
 
         // 현재 캐릭터가 완료되었으면 UI 숨기기

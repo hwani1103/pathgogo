@@ -16,7 +16,6 @@ public class GoalController : MonoBehaviour
 
     [Header("Visual")]
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private bool showAssignedCharacters = true;
 
     // 할당된 캐릭터들
     private List<string> assignedCharacterIds = new List<string>();
@@ -79,19 +78,8 @@ public class GoalController : MonoBehaviour
             spriteRenderer.color = goalColor;
             spriteRenderer.sortingOrder = 5; // 타일 위, 캐릭터 아래
 
-            // 목적지 타입에 따라 다른 크기
-            switch (goalType)
-            {
-                case GoalType.Individual:
-                    transform.localScale = Vector3.one * 0.8f;
-                    break;
-                case GoalType.Shared:
-                    transform.localScale = Vector3.one * 1.0f;
-                    break;
-                case GoalType.Single:
-                    transform.localScale = Vector3.one * 1.2f;
-                    break;
-            }
+            // 모든 Goal 기본 크기는 1.0f로 통일
+            transform.localScale = Vector3.one;
         }
     }
 

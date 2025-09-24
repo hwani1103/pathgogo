@@ -69,7 +69,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 특정 위치에 장애물이 있는지 확인
     /// </summary>
-    public bool HasObstacleAt(Vector3Int position, CharacterController excludeCharacter = null)
+    public bool HasObstacleAt(Vector3Int position, GamePiece excludeCharacter = null)
     {
         if (levelLoader == null) return false;
 
@@ -99,7 +99,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 두 위치 사이의 직선 경로에 장애물이 있는지 확인
     /// </summary>
-    public bool HasObstacleInPath(Vector3Int fromPos, Vector3Int toPos, CharacterController excludeCharacter = null)
+    public bool HasObstacleInPath(Vector3Int fromPos, Vector3Int toPos, GamePiece excludeCharacter = null)
     {
         // 동서남북이 아닌 경우 무효
         if (fromPos.x != toPos.x && fromPos.y != toPos.y)
@@ -129,12 +129,12 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 캐릭터가 특정 방향으로 이동 가능한 최대 거리 계산
     /// </summary>
-    public List<Vector3Int> GetValidPositionsInDirection(Vector3Int startPos, Vector3Int direction, CharacterController character, int maxDistance = 10)
+    public List<Vector3Int> GetValidPositionsInDirection(Vector3Int startPos, Vector3Int direction, GamePiece character)
     {
         List<Vector3Int> validPositions = new List<Vector3Int>();
         Vector3Int currentPos = startPos;
 
-        for (int i = 1; i <= maxDistance; i++)
+        for (int i = 1; i <= 100; i++) // 충분히 큰 값 (또는 while(true)로 무한)
         {
             Vector3Int nextPos = currentPos + direction * i;
 
@@ -159,7 +159,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 특정 위치가 캐릭터의 목적지인지 확인
     /// </summary>
-    public bool IsGoalPosition(Vector3Int position, CharacterController character)
+    public bool IsGoalPosition(Vector3Int position, GamePiece character)
     {
         if (levelLoader == null || character == null) return false;
 
@@ -175,7 +175,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 캐릭터가 사용할 수 있는 목적지들 반환
     /// </summary>
-    public List<GoalController> GetAvailableGoalsForCharacter(CharacterController character)
+    public List<GoalController> GetAvailableGoalsForCharacter(GamePiece character)
     {
         List<GoalController> availableGoals = new List<GoalController>();
 
@@ -198,7 +198,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 마지막-1 선택에서 목적지와 직선거리상에 있는 위치만 필터링
     /// </summary>
-    public List<Vector3Int> FilterLastSelectionPositions(List<Vector3Int> positions, CharacterController character)
+    public List<Vector3Int> FilterLastSelectionPositions(List<Vector3Int> positions, GamePiece character)
     {
         List<Vector3Int> filteredPositions = new List<Vector3Int>();
 
@@ -228,7 +228,7 @@ public class PathValidator : MonoBehaviour
     /// <summary>
     /// 전체 경로의 유효성 검사
     /// </summary>
-    public bool ValidateCompletePath(List<Vector3Int> path, CharacterController character)
+    public bool ValidateCompletePath(List<Vector3Int> path, GamePiece character)
     {
         if (path == null || path.Count < 2 || character == null)
             return false;

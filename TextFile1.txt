@@ -1,9 +1,1821 @@
-using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 캐릭터의 기본 동작과 상태를 관리하는 컨트롤러
+/// </summary>
+public class GamePiece : MonoBehaviour
+{
+    [Header("Character Info")]
+    [SerializeField] private string characterId;
+    [SerializeField] private int maxSelections = 3;
+    [SerializeField] private Color characterColor = Color.red;
+
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private Vector3Int currentGridPosition;
+
+    [Header("Visual")]
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private bool isSelected = false;
+
+    [Header("Completion State")]
+    [SerializeField] private bool isCompleted = false;
+    // 상태 관리
+    private bool isMoving = false;
+    private int remainingSelections;
+
+    // 참조
+    private GridVisualizer gridVisualizer;
+
+    void Awake()
+    {
+        // 컴포넌트 자동 할당
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
+        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+
+        remainingSelections = maxSelections;
+    }
+
+    void Start()
+    {
+        // 초기 설정
+        SetupCharacter();
+        UpdateVisual();
+    }
+
+    /// <summary>
+    /// 캐릭터 초기 설정
+    /// </summary>
+    public void Initialize(string id, Vector3Int startPos, int maxSel, Color color, float speed = 2f)
+    {
+        characterId = id;
+        currentGridPosition = startPos;
+        maxSelections = maxSel;
+        remainingSelections = maxSel;
+        characterColor = color;
+        moveSpeed = speed;
+
+        SetupCharacter();
+        UpdateVisual();
+    }
+    /// <summary>
+    /// 경로 완성 상태 설정
+    /// </summary>
+    public void SetCompleted(bool completed)
+    {
+        isCompleted = completed;
+        UpdateVisual();
+    }
+
+    /// <summary>
+    /// 완성 상태 확인
+    /// </summary>
+    public bool IsCompleted()
+    {
+        return isCompleted;
+    }
+
+    /// <summary>
+    /// 캐릭터 기본 설정 적용
+    /// </summary>
+    private void SetupCharacter()
+    {
+        gameObject.name = $"Character_{characterId}";
+
+        // 그리드 좌표를 월드 좌표로 변환하여 위치 설정
+        if (gridVisualizer != null)
+        {
+            Vector3 worldPos = gridVisualizer.GridToWorldPosition(currentGridPosition);
+            transform.position = worldPos;
+        }
+
+        // 스프라이트 렌더러 설정
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = characterColor;
+            spriteRenderer.sortingOrder = 10; // 타일보다 위에 표시
+        }
+    }
+
+    /// <summary>
+    /// 시각적 표현 업데이트 (선택 상태 등)
+    /// </summary>
+    /// <summary>
+    /// 시각적 표현 업데이트 (선택 상태 등)
+    /// </summary>
+    private void UpdateVisual()
+    {
+        if (spriteRenderer == null) return;
+
+        // 완료된 캐릭터는 반투명 상태 유지
+        if (isCompleted)
+        {
+            Color color = characterColor;
+            color.a = 0.5f;
+            spriteRenderer.color = color;
+            transform.localScale = Vector3.one; // 크기 변화 없음
+            return;
+        }
+
+        // 선택된 상태일 때 더 밝게 표시
+        if (isSelected)
+        {
+            spriteRenderer.color = characterColor * 1.3f;
+            transform.localScale = Vector3.one * 1.1f;
+        }
+        else
+        {
+            spriteRenderer.color = characterColor;
+            transform.localScale = Vector3.one;
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터 선택/해제
+    /// </summary>
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+        UpdateVisual();
+    }
+
+    /// <summary>
+    /// 현재 위치에서 특정 방향으로 이동 가능한지 확인
+    /// </summary>
+    public bool CanMoveToDirection(Vector3Int direction)
+    {
+        if (remainingSelections <= 0) return false;
+        if (isMoving) return false;
+
+        Vector3Int targetPosition = currentGridPosition + direction;
+
+        // 그리드 범위 확인
+        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// 특정 위치로 이동 가능한지 확인
+    /// </summary>
+    public bool CanMoveToPosition(Vector3Int targetPosition)
+    {
+        if (remainingSelections <= 0) return false;
+        if (isMoving) return false;
+
+        // 그리드 범위 확인
+        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// 남은 선택 횟수 반환
+    /// </summary>
+    public int GetRemainingSelections()
+    {
+        return remainingSelections;
+    }
+
+    /// <summary>
+    /// 현재 그리드 위치 반환
+    /// </summary>
+    public Vector3Int GetCurrentGridPosition()
+    {
+        return currentGridPosition;
+    }
+
+    /// <summary>
+    /// 캐릭터 ID 반환
+    /// </summary>
+    public string GetCharacterId()
+    {
+        return characterId;
+    }
+
+    /// <summary>
+    /// 이동 중인지 확인
+    /// </summary>
+    /// 
+    /// /// <summary>
+    /// 원래 최대 선택 횟수 반환
+    /// </summary>
+    public int GetMaxSelections()
+    {
+        return maxSelections;
+    }
+    public bool IsMoving()
+    {
+        return isMoving;
+    }
+
+    /// <summary>
+    /// 디버그 정보 출력
+    /// </summary>
+    public void LogCharacterInfo()
+    {
+        Debug.Log($"Character {characterId}: Position({currentGridPosition}), Remaining({remainingSelections}), Moving({isMoving})");
+    }
+
+#if UNITY_EDITOR
+    void OnDrawGizmosSelected()
+    {
+        // 에디터에서 선택시 현재 위치에 기즈모 표시
+        Gizmos.color = characterColor;
+        Gizmos.DrawWireSphere(transform.position, 0.3f);
+
+        // 그리드 위치 정보 표시
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 0.7f,
+            $"{characterId}\n({currentGridPosition.x},{currentGridPosition.y})\nSel: {remainingSelections}");
+    }
+#endif
+}using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+/// <summary>
+/// 선택된 캐릭터의 정보를 UI로 표시하는 시스템
+/// </summary>
+public class CharacterUIManager : MonoBehaviour
+{
+    [Header("UI References")]
+    [SerializeField] private GameObject characterInfoPanel;
+    [SerializeField] private TextMeshProUGUI characterIdText;
+    [SerializeField] private TextMeshProUGUI maxSelectionsText;
+    [SerializeField] private TextMeshProUGUI remainingSelectionsText;
+
+    [Header("UI Settings")]
+    [SerializeField] private bool showPanel = true;
+    [SerializeField] private float panelFadeSpeed = 2f;
+
+    // 현재 표시 중인 캐릭터
+    private GamePiece currentCharacter;
+
+    // 참조
+    private TouchInputManager touchInputManager;
+    private PathSelectionManager pathSelectionManager;
+
+    // UI 애니메이션용
+    private CanvasGroup panelCanvasGroup;
+    private bool isPanelVisible = false;
+
+    void Awake()
+    {
+        touchInputManager = FindFirstObjectByType<TouchInputManager>();
+        pathSelectionManager = FindFirstObjectByType<PathSelectionManager>();
+
+        // CanvasGroup 컴포넌트 확인/추가
+        if (characterInfoPanel != null)
+        {
+            panelCanvasGroup = characterInfoPanel.GetComponent<CanvasGroup>();
+            if (panelCanvasGroup == null)
+                panelCanvasGroup = characterInfoPanel.AddComponent<CanvasGroup>();
+
+            // 초기에는 숨김
+            characterInfoPanel.SetActive(false);
+            panelCanvasGroup.alpha = 0f;
+        }
+    }
+
+    void Start()
+    {
+        // 초기 UI 상태 설정
+        HideCharacterInfo();
+    }
+
+    void Update()
+    {
+        // 선택된 캐릭터 정보 실시간 업데이트
+        UpdateCharacterInfo();
+
+        // 패널 페이드 애니메이션
+        UpdatePanelAnimation();
+    }
+
+    /// <summary>
+    /// 캐릭터 정보 실시간 업데이트
+    /// </summary>
+    /// <summary>
+    /// 캐릭터 정보 실시간 업데이트
+    /// </summary>
+    private void UpdateCharacterInfo()
+    {
+        if (touchInputManager == null) return;
+
+        GamePiece selectedCharacter = touchInputManager.GetSelectedCharacter();
+
+        // 선택된 캐릭터가 변경되었을 때
+        if (currentCharacter != selectedCharacter)
+        {
+            currentCharacter = selectedCharacter;
+
+            if (currentCharacter != null)
+            {
+                ShowCharacterInfo();
+            }
+            else
+            {
+                HideCharacterInfo();
+            }
+        }
+
+        // 현재 캐릭터가 완료되었으면 UI 숨기기
+        if (currentCharacter != null && currentCharacter.IsCompleted())
+        {
+            HideCharacterInfo();
+            currentCharacter = null;
+            return;
+        }
+
+        // 선택된 캐릭터가 있을 때 실시간 업데이트
+        if (currentCharacter != null && isPanelVisible)
+        {
+            UpdateSelectionCounts();
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터 정보 표시
+    /// </summary>
+    private void ShowCharacterInfo()
+    {
+        if (!showPanel || characterInfoPanel == null || currentCharacter == null) return;
+
+        // 기본 정보 설정
+        if (characterIdText != null)
+            characterIdText.text = $"Character: {currentCharacter.GetCharacterId()}";
+
+        if (maxSelectionsText != null)
+            maxSelectionsText.text = $"Max Selections: {currentCharacter.GetRemainingSelections()}"; // 초기값
+
+        // 패널 표시
+        characterInfoPanel.SetActive(true);
+        isPanelVisible = true;
+
+        UpdateSelectionCounts();
+    }
+
+    /// <summary>
+    /// 선택 횟수 정보 업데이트
+    /// </summary>
+    /// <summary>
+    /// 선택 횟수 정보 업데이트
+    /// </summary>
+    private void UpdateSelectionCounts()
+    {
+        if (currentCharacter == null) return;
+
+        // 현재 사용된 선택 횟수 계산
+        int usedSelections = 0;
+        if (pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
+        {
+            var currentPath = pathSelectionManager.GetCurrentPath();
+            if (currentPath != null && currentPath.Count > 1)
+            {
+                usedSelections = currentPath.Count - 1; // 시작점 제외
+            }
+        }
+
+        int maxSelections = currentCharacter.GetMaxSelections();
+        int remainingSelections = maxSelections - usedSelections;
+
+        // UI 업데이트
+        if (maxSelectionsText != null)
+            maxSelectionsText.text = $"Max Selections: {maxSelections}";
+
+        if (remainingSelectionsText != null)
+            remainingSelectionsText.text = $"Remaining: {remainingSelections}/{maxSelections}";
+    }
+
+    /// <summary>
+    /// 캐릭터 정보 숨기기
+    /// </summary>
+    private void HideCharacterInfo()
+    {
+        isPanelVisible = false;
+
+        if (characterInfoPanel != null)
+        {
+            // 페이드 아웃 애니메이션 후 비활성화
+            Invoke(nameof(DeactivatePanel), 1f / panelFadeSpeed);
+        }
+    }
+
+    /// <summary>
+    /// 패널 비활성화
+    /// </summary>
+    private void DeactivatePanel()
+    {
+        if (characterInfoPanel != null && !isPanelVisible)
+            characterInfoPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// 패널 페이드 애니메이션
+    /// </summary>
+    private void UpdatePanelAnimation()
+    {
+        if (panelCanvasGroup == null) return;
+
+        float targetAlpha = isPanelVisible ? 1f : 0f;
+        float currentAlpha = panelCanvasGroup.alpha;
+
+        if (Mathf.Abs(currentAlpha - targetAlpha) > 0.01f)
+        {
+            panelCanvasGroup.alpha = Mathf.MoveTowards(currentAlpha, targetAlpha, panelFadeSpeed * Time.deltaTime);
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터 색상과 일치하는 UI 색상 적용
+    /// </summary>
+    private void ApplyCharacterColor()
+    {
+        if (currentCharacter == null) return;
+
+        // 캐릭터의 색상 가져오기
+        var characterRenderer = currentCharacter.GetComponent<SpriteRenderer>();
+        if (characterRenderer != null)
+        {
+            Color characterColor = characterRenderer.color;
+
+            // 텍스트 색상 적용
+            if (characterIdText != null)
+                characterIdText.color = characterColor;
+        }
+    }
+
+    /// <summary>
+    /// UI 설정 변경
+    /// </summary>
+    public void SetUISettings(bool showUI, float fadeSpeed = 2f)
+    {
+        showPanel = showUI;
+        panelFadeSpeed = fadeSpeed;
+
+        if (!showUI)
+        {
+            HideCharacterInfo();
+        }
+    }
+
+    /// <summary>
+    /// 수동으로 UI 강제 업데이트
+    /// </summary>
+    public void ForceUpdateUI()
+    {
+        UpdateCharacterInfo();
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Test Show Character Info")]
+    public void TestShowCharacterInfo()
+    {
+        if (touchInputManager != null)
+        {
+            var selectedCharacter = touchInputManager.GetSelectedCharacter();
+            if (selectedCharacter != null)
+            {
+                ShowCharacterInfo();
+            }
+            else
+            {
+                Debug.Log("No character selected for testing");
+            }
+        }
+    }
+
+    [ContextMenu("Test Hide Character Info")]
+    public void TestHideCharacterInfo()
+    {
+        HideCharacterInfo();
+    }
+#endif
+}using UnityEngine;
+using UnityEngine.InputSystem;
+
+/// <summary>
+/// 터치 입력을 처리하고 캐릭터 선택을 관리하는 시스템
+/// 좌표 변환 로직이 GridVisualizer와 통합되도록 수정됨
+/// </summary>
+public class TouchInputManager : MonoBehaviour
+{
+    [Header("Input Settings")]
+    [SerializeField] private float touchRadius = 0.5f;
+    [SerializeField] private LayerMask touchLayerMask = -1;
+
+    [Header("Debug")]
+    [SerializeField] private bool showDebugInfo = true;
+    [SerializeField] private bool showTouchPosition = true;
+
+    // 입력 시스템
+    private PlayerInputActions inputActions;
+    private Camera mainCamera;
+
+    // 선택된 캐릭터
+    private GamePiece selectedCharacter;
+
+    // 참조
+    private LevelLoader levelLoader;
+    private GridVisualizer gridVisualizer;
+    private PathSelectionManager pathSelectionManager;
+
+    void Awake()
+    {
+        // 컴포넌트 참조 설정
+        inputActions = new PlayerInputActions();
+        mainCamera = Camera.main;
+        levelLoader = FindFirstObjectByType<LevelLoader>();
+        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+        pathSelectionManager = FindFirstObjectByType<PathSelectionManager>();
+
+        if (mainCamera == null)
+        {
+            Debug.LogError("Main Camera not found!");
+        }
+
+        if (gridVisualizer == null)
+        {
+            Debug.LogError("GridVisualizer not found! TouchInputManager needs GridVisualizer for coordinate conversion.");
+        }
+    }
+
+    void OnEnable()
+    {
+        inputActions.Enable();
+        inputActions.Player.TouchPress.performed += OnTouchPressed;
+    }
+
+    void OnDisable()
+    {
+        inputActions.Player.TouchPress.performed -= OnTouchPressed;
+        inputActions.Disable();
+    }
+
+    private void OnTouchPressed(InputAction.CallbackContext context)
+    {
+        Vector2 touchPosition = inputActions.Player.Touch.ReadValue<Vector2>();
+        ProcessTouch(touchPosition);
+    }
+
+    void OnDestroy()
+    {
+        inputActions?.Dispose();
+    }
+
+    /// <summary>
+    /// 터치 입력 처리 (좌표 변환 로직 수정)
+    /// </summary>
+    private void ProcessTouch(Vector2 screenPosition)
+    {
+        if (mainCamera == null || gridVisualizer == null) return;
+
+        // 스크린 좌표를 월드 좌표로 변환
+        Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -mainCamera.transform.position.z));
+        worldPosition.z = 0; // 2D 게임이므로 Z는 0
+
+        if (showTouchPosition)
+        {
+            Debug.Log($"Touch at screen: {screenPosition}, world: {worldPosition}");
+        }
+
+        // GridVisualizer를 사용한 정확한 좌표 변환
+        Vector3Int gridPosition = gridVisualizer.WorldToGridPosition(worldPosition);
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"World: {worldPosition} → Grid: {gridPosition}");
+            Debug.Log($"Grid valid: {gridVisualizer.IsValidGridPosition(gridPosition)}");
+        }
+
+        // 터치한 위치에서 캐릭터 찾기
+        GamePiece touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
+
+        if (touchedCharacter != null)
+        {
+            // 이미 선택된 캐릭터를 다시 터치하면 토글
+            if (selectedCharacter == touchedCharacter)
+            {
+                // 선택 해제
+                DeselectCharacter();
+                return;
+            }
+
+            // 경로 선택 중에 다른 캐릭터 터치하면 무시
+            if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
+            {
+                return; // 무시
+            }
+
+            // 새로운 캐릭터 선택 (또는 처음 선택)
+            SelectCharacter(touchedCharacter);
+        }
+        else
+        {
+            // 경로 선택 처리
+            if (selectedCharacter != null && pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
+            {
+                pathSelectionManager.SelectPosition(gridPosition);
+            }
+            else
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"No character found at touch position. Grid position: {gridPosition}");
+                }
+            }
+        }
+    }
+    /// <summary>
+    /// 특정 위치에서 캐릭터 찾기 (검증 강화)
+    /// </summary>
+    private GamePiece FindCharacterAtPosition(Vector3 worldPosition, Vector3Int gridPosition)
+    {
+        if (levelLoader == null) return null;
+
+        // 방법 1: 그리드 좌표로 정확히 찾기 (우선순위)
+        GamePiece characterAtGrid = levelLoader.GetCharacterAt(gridPosition);
+        if (characterAtGrid != null && !characterAtGrid.IsCompleted()) // 완료된 캐릭터는 선택 불가
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"Found character {characterAtGrid.GetCharacterId()} at exact grid position {gridPosition}");
+            }
+            return characterAtGrid;
+        }
+
+        // 방법 2: 터치 반경 내에서 찾기 (관대한 터치)
+        var allCharacters = levelLoader.GetSpawnedCharacters();
+        GamePiece closestCharacter = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (var character in allCharacters)
+        {
+            if (character.IsCompleted()) continue; // 완료된 캐릭터는 제외
+
+            float distance = Vector3.Distance(worldPosition, character.transform.position);
+            if (distance <= touchRadius && distance < closestDistance)
+            {
+                closestCharacter = character;
+                closestDistance = distance;
+            }
+        }
+
+        if (closestCharacter != null && showDebugInfo)
+        {
+            Debug.Log($"Found character {closestCharacter.GetCharacterId()} within touch radius. Distance: {closestDistance:F2}");
+        }
+
+        return closestCharacter;
+    }
+    /// <summary>
+    /// 캐릭터 선택 가능 여부 확인
+    /// </summary>
+    private bool CanSelectCharacter(GamePiece character)
+    {
+        if (character == null) return false;
+
+        // 이동 중인 캐릭터는 선택 불가
+        if (character.IsMoving())
+        {
+            Debug.Log($"Character {character.GetCharacterId()} is currently moving and cannot be selected");
+            return false;
+        }
+
+        // 남은 선택 횟수가 없으면 선택 불가
+        if (character.GetRemainingSelections() <= 0)
+        {
+            Debug.Log($"Character {character.GetCharacterId()} has no remaining selections");
+            return false;
+        }
+
+        // 다른 캐릭터가 경로 선택 중일 때의 제약 검사
+        if (pathSelectionManager != null && pathSelectionManager.IsSelectingPath())
+        {
+            var currentSelectingCharacter = pathSelectionManager.GetCurrentCharacter();
+            if (currentSelectingCharacter != null && currentSelectingCharacter != character)
+            {
+                Debug.Log($"Cannot select character {character.GetCharacterId()} while {currentSelectingCharacter.GetCharacterId()} is selecting path");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 캐릭터 선택이 차단되었을 때의 피드백
+    /// </summary>
+    private void ShowCharacterSelectionBlocked(GamePiece character)
+    {
+        if (Application.isMobilePlatform)
+        {
+            Handheld.Vibrate();
+        }
+
+        Debug.Log($"Character {character.GetCharacterId()} selection blocked");
+
+        // 시각적 피드백 (예: 캐릭터 주변에 빨간 테두리 효과)
+        StartCoroutine(ShowBlockedSelectionEffect(character));
+    }
+
+    /// <summary>
+    /// 선택 차단 시각 효과
+    /// </summary>
+    private System.Collections.IEnumerator ShowBlockedSelectionEffect(GamePiece character)
+    {
+        if (character == null) yield break;
+
+        // 기존 색상 백업
+        var spriteRenderer = character.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null) yield break;
+
+        Color originalColor = spriteRenderer.color;
+        Color blockedColor = Color.red;
+
+        // 색상 깜빡임 효과
+        float duration = 0.5f;
+        int blinkCount = 3;
+
+        for (int i = 0; i < blinkCount; i++)
+        {
+            // 빨간색으로
+            spriteRenderer.color = blockedColor;
+            yield return new WaitForSeconds(duration / (blinkCount * 2));
+
+            // 원래 색으로
+            spriteRenderer.color = originalColor;
+            yield return new WaitForSeconds(duration / (blinkCount * 2));
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터 선택 처리
+    /// </summary>
+    private void SelectCharacter(GamePiece character)
+    {
+        // 이미 선택된 캐릭터와 같다면 선택 해제
+        if (selectedCharacter == character)
+        {
+            DeselectCharacter();
+            return;
+        }
+
+        // 기존 선택 해제
+        if (selectedCharacter != null)
+        {
+            selectedCharacter.SetSelected(false);
+        }
+
+        // 새 캐릭터 선택
+        selectedCharacter = character;
+        selectedCharacter.SetSelected(true);
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"Character {selectedCharacter.GetCharacterId()} selected");
+            selectedCharacter.LogCharacterInfo();
+        }
+
+        // PathSelectionManager에게 경로 선택 시작 요청
+        if (pathSelectionManager != null)
+        {
+            pathSelectionManager.StartPathSelection(selectedCharacter);
+        }
+
+        // 선택된 캐릭터의 목표 Goal 강조
+        HighlightAssignedGoal();
+    }
+
+    /// <summary>
+    /// 캐릭터 선택 해제
+    /// </summary>
+    private void DeselectCharacter()
+    {
+        if (selectedCharacter != null)
+        {
+            selectedCharacter.SetSelected(false);
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"Character {selectedCharacter.GetCharacterId()} deselected");
+            }
+
+            selectedCharacter = null;
+        }
+
+        // PathSelectionManager에게 경로 선택 종료 요청
+        if (pathSelectionManager != null)
+        {
+            pathSelectionManager.EndPathSelection();
+        }
+
+        // Goal 하이라이트 해제
+        ClearGoalHighlight();
+    }
+
+    /// <summary>
+    /// 선택된 캐릭터의 목표 Goal 강조
+    /// </summary>
+    private void HighlightAssignedGoal()
+    {
+        if (selectedCharacter == null || levelLoader == null) return;
+
+        // 모든 Goal 하이라이트 해제
+        var allGoals = levelLoader.GetSpawnedGoals();
+        foreach (var goal in allGoals)
+        {
+            goal.transform.localScale = Vector3.one;
+        }
+
+        // 선택된 캐릭터가 사용할 수 있는 Goal들 하이라이트
+        foreach (var goal in allGoals)
+        {
+            if (goal.CanUseGoal(selectedCharacter.GetCharacterId()))
+            {
+                goal.transform.localScale = Vector3.one * 1.2f;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 모든 Goal 하이라이트 해제
+    /// </summary>
+    private void ClearGoalHighlight()
+    {
+        if (levelLoader == null) return;
+
+        var allGoals = levelLoader.GetSpawnedGoals();
+        foreach (var goal in allGoals)
+        {
+            goal.transform.localScale = Vector3.one;
+        }
+    }
+
+    /// <summary>
+    /// 현재 선택된 캐릭터 반환
+    /// </summary>
+    public GamePiece GetSelectedCharacter()
+    {
+        return selectedCharacter;
+    }
+
+    /// <summary>
+    /// 특정 캐릭터 강제 선택
+    /// </summary>
+    public void ForceSelectCharacter(GamePiece character)
+    {
+        if (character != null && CanSelectCharacter(character))
+        {
+            SelectCharacter(character);
+        }
+    }
+
+    /// <summary>
+    /// 모든 선택 해제
+    /// </summary>
+    public void ClearSelection()
+    {
+        DeselectCharacter();
+    }
+
+    /// <summary>
+    /// 입력 시스템 활성/비활성화 (게임 상태 관리용)
+    /// </summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        if (enabled)
+            inputActions?.Enable();
+        else
+            inputActions?.Disable();
+    }
+
+#if UNITY_EDITOR
+    void OnDrawGizmos()
+    {
+        if (showTouchPosition && mainCamera != null)
+        {
+            // 터치 반경 표시
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, touchRadius);
+        }
+
+        // 선택된 캐릭터 주변에 기즈모 표시
+        if (selectedCharacter != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(selectedCharacter.transform.position, touchRadius);
+        }
+    }
+
+    [ContextMenu("Test Character Selection")]
+    public void TestCharacterSelection()
+    {
+        if (levelLoader != null)
+        {
+            var characters = levelLoader.GetSpawnedCharacters();
+            if (characters.Count > 0)
+            {
+                SelectCharacter(characters[0]);
+            }
+        }
+    }
+
+    [ContextMenu("Clear All Selections")]
+    public void TestClearSelection()
+    {
+        ClearSelection();
+    }
+}
+#endifusing System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 캐릭터 이동을 시뮬레이션하여 시간별 위치를 계산하는 시스템
+/// 충돌 감지를 위한 정확한 위치 추적을 제공합니다
+/// </summary>
+public class MovementSimulator : MonoBehaviour
+{
+    [Header("Movement Settings")]
+    [SerializeField] private float defaultMoveSpeed = 2f;
+    [SerializeField] private AnimationCurve movementCurve = AnimationCurve.Linear(0, 0, 1, 1);
+
+    [Header("Simulation Settings")]
+    [SerializeField] private bool useSmoothing = true;
+    [SerializeField] private float pauseTimeAtWaypoint = 0.1f; // 경로점에서 잠시 정지 시간
+
+    // 참조
+    private GridVisualizer gridVisualizer;
+    private LevelData currentLevelData;
+
+    void Awake()
+    {
+        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+    }
+
+    /// <summary>
+    /// 레벨 데이터 설정
+    /// </summary>
+    public void SetLevelData(LevelData levelData)
+    {
+        currentLevelData = levelData;
+        if (currentLevelData != null)
+            defaultMoveSpeed = currentLevelData.moveSpeed;
+    }
+
+    /// <summary>
+    /// 경로를 따라 시간별 위치를 시뮬레이션
+    /// </summary>
+    public List<Vector3> SimulateMovement(List<Vector3Int> gridPath, float timeStep, float? customSpeed = null)
+    {
+        if (gridPath == null || gridPath.Count < 2)
+            return new List<Vector3>();
+
+        float moveSpeed = customSpeed ?? defaultMoveSpeed;
+        var timeline = new List<Vector3>();
+
+        // 그리드 좌표를 월드 좌표로 변환
+        var worldPath = ConvertToWorldPath(gridPath);
+
+        // 각 구간별 이동 시뮬레이션
+        Vector3 currentPosition = worldPath[0];
+        timeline.Add(currentPosition);
+
+        float totalTime = 0f;
+
+        for (int i = 0; i < worldPath.Count - 1; i++)
+        {
+            Vector3 startPos = worldPath[i];
+            Vector3 endPos = worldPath[i + 1];
+
+            // 구간별 이동 시뮬레이션
+            var segmentTimeline = SimulateSegmentMovement(startPos, endPos, moveSpeed, timeStep, totalTime);
+
+            // 첫 번째 위치는 중복이므로 제외 (이전 구간의 마지막 위치)
+            for (int j = 1; j < segmentTimeline.Count; j++)
+            {
+                timeline.Add(segmentTimeline[j]);
+                totalTime += timeStep;
+            }
+
+            // 경로점에서 잠시 정지 (마지막 구간이 아닌 경우)
+            if (i < worldPath.Count - 2 && pauseTimeAtWaypoint > 0)
+            {
+                int pauseSteps = Mathf.RoundToInt(pauseTimeAtWaypoint / timeStep);
+                for (int pause = 0; pause < pauseSteps; pause++)
+                {
+                    timeline.Add(endPos);
+                    totalTime += timeStep;
+                }
+            }
+        }
+
+        return timeline;
+    }
+
+    /// <summary>
+    /// 두 지점 간의 이동을 시간별로 시뮬레이션
+    /// </summary>
+    private List<Vector3> SimulateSegmentMovement(Vector3 startPos, Vector3 endPos, float speed, float timeStep, float startTime)
+    {
+        var segmentTimeline = new List<Vector3>();
+
+        float distance = Vector3.Distance(startPos, endPos);
+        float totalMoveTime = distance / speed;
+
+        if (totalMoveTime <= 0)
+        {
+            segmentTimeline.Add(startPos);
+            segmentTimeline.Add(endPos);
+            return segmentTimeline;
+        }
+
+        int steps = Mathf.CeilToInt(totalMoveTime / timeStep) + 1;
+
+        for (int step = 0; step < steps; step++)
+        {
+            float t = Mathf.Clamp01((step * timeStep) / totalMoveTime);
+
+            Vector3 position;
+            if (useSmoothing)
+            {
+                // 애니메이션 커브 적용
+                float smoothT = movementCurve.Evaluate(t);
+                position = Vector3.Lerp(startPos, endPos, smoothT);
+            }
+            else
+            {
+                // 선형 보간
+                position = Vector3.Lerp(startPos, endPos, t);
+            }
+
+            segmentTimeline.Add(position);
+        }
+
+        // 마지막 위치가 정확히 목표점이 되도록 보장
+        if (segmentTimeline.Count > 0)
+            segmentTimeline[segmentTimeline.Count - 1] = endPos;
+
+        return segmentTimeline;
+    }
+
+    /// <summary>
+    /// 그리드 경로를 월드 좌표 경로로 변환
+    /// </summary>
+    private List<Vector3> ConvertToWorldPath(List<Vector3Int> gridPath)
+    {
+        var worldPath = new List<Vector3>();
+
+        foreach (var gridPos in gridPath)
+        {
+            Vector3 worldPos;
+            if (gridVisualizer != null)
+            {
+                worldPos = gridVisualizer.GridToWorldPosition(gridPos);
+            }
+            else
+            {
+                // GridVisualizer가 없는 경우 기본 변환
+                worldPos = new Vector3(gridPos.x, gridPos.y, 0);
+            }
+            worldPath.Add(worldPos);
+        }
+
+        return worldPath;
+    }
+
+    /// <summary>
+    /// 특정 시간에서의 캐릭터 위치 계산 (단일 쿼리용)
+    /// </summary>
+    public Vector3 GetPositionAtTime(List<Vector3Int> gridPath, float targetTime, float? customSpeed = null)
+    {
+        var timeline = SimulateMovement(gridPath, 0.1f, customSpeed);
+
+        if (timeline.Count == 0)
+            return Vector3.zero;
+
+        int timeIndex = Mathf.RoundToInt(targetTime / 0.1f);
+
+        if (timeIndex >= timeline.Count)
+            return timeline[timeline.Count - 1]; // 경로 완료 후에는 마지막 위치
+
+        return timeline[Mathf.Max(0, timeIndex)];
+    }
+
+    /// <summary>
+    /// 경로의 총 이동 시간 계산
+    /// </summary>
+    public float CalculateTotalMoveTime(List<Vector3Int> gridPath, float? customSpeed = null)
+    {
+        if (gridPath == null || gridPath.Count < 2)
+            return 0f;
+
+        float moveSpeed = customSpeed ?? defaultMoveSpeed;
+        var worldPath = ConvertToWorldPath(gridPath);
+        float totalTime = 0f;
+
+        for (int i = 0; i < worldPath.Count - 1; i++)
+        {
+            float distance = Vector3.Distance(worldPath[i], worldPath[i + 1]);
+            totalTime += distance / moveSpeed;
+
+            // 경로점에서의 정지 시간 추가 (마지막 구간이 아닌 경우)
+            if (i < worldPath.Count - 2)
+                totalTime += pauseTimeAtWaypoint;
+        }
+
+        return totalTime;
+    }
+
+    /// <summary>
+    /// 두 캐릭터의 이동 타임라인을 비교하여 가장 가까운 거리의 시점 찾기
+    /// </summary>
+    public float FindClosestApproachTime(List<Vector3Int> path1, List<Vector3Int> path2, float timeStep = 0.1f)
+    {
+        var timeline1 = SimulateMovement(path1, timeStep);
+        var timeline2 = SimulateMovement(path2, timeStep);
+
+        float closestTime = 0f;
+        float minDistance = float.MaxValue;
+
+        int maxSteps = Mathf.Max(timeline1.Count, timeline2.Count);
+
+        for (int i = 0; i < maxSteps; i++)
+        {
+            Vector3 pos1 = i < timeline1.Count ? timeline1[i] : timeline1[timeline1.Count - 1];
+            Vector3 pos2 = i < timeline2.Count ? timeline2[i] : timeline2[timeline2.Count - 1];
+
+            float distance = Vector3.Distance(pos1, pos2);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestTime = i * timeStep;
+            }
+        }
+
+        return closestTime;
+    }
+
+    /// <summary>
+    /// 경로의 각 구간별 속도를 다르게 설정하여 시뮬레이션 (고급 기능)
+    /// </summary>
+    public List<Vector3> SimulateMovementWithVariableSpeed(List<Vector3Int> gridPath, List<float> segmentSpeeds, float timeStep)
+    {
+        if (gridPath == null || gridPath.Count < 2 || segmentSpeeds == null || segmentSpeeds.Count != gridPath.Count - 1)
+            return SimulateMovement(gridPath, timeStep);
+
+        var timeline = new List<Vector3>();
+        var worldPath = ConvertToWorldPath(gridPath);
+
+        Vector3 currentPosition = worldPath[0];
+        timeline.Add(currentPosition);
+        float totalTime = 0f;
+
+        for (int i = 0; i < worldPath.Count - 1; i++)
+        {
+            Vector3 startPos = worldPath[i];
+            Vector3 endPos = worldPath[i + 1];
+            float segmentSpeed = segmentSpeeds[i];
+
+            var segmentTimeline = SimulateSegmentMovement(startPos, endPos, segmentSpeed, timeStep, totalTime);
+
+            for (int j = 1; j < segmentTimeline.Count; j++)
+            {
+                timeline.Add(segmentTimeline[j]);
+                totalTime += timeStep;
+            }
+        }
+
+        return timeline;
+    }
+
+    /// <summary>
+    /// 디버그용: 시뮬레이션 결과 시각화
+    /// </summary>
+    public void DebugDrawMovementPreview(List<Vector3Int> gridPath, float previewDuration = 2f)
+    {
+        if (gridPath == null || gridPath.Count < 2) return;
+
+        var timeline = SimulateMovement(gridPath, 0.1f);
+
+        // 경로 라인 그리기
+        var worldPath = ConvertToWorldPath(gridPath);
+        for (int i = 0; i < worldPath.Count - 1; i++)
+        {
+            Debug.DrawLine(worldPath[i], worldPath[i + 1], Color.green, previewDuration);
+        }
+
+        // 시작점과 끝점 표시
+        if (worldPath.Count > 0)
+        {
+            Debug.DrawRay(worldPath[0], Vector3.up * 0.5f, Color.blue, previewDuration);
+            Debug.DrawRay(worldPath[worldPath.Count - 1], Vector3.up * 0.5f, Color.red, previewDuration);
+        }
+
+        Debug.Log($"Movement simulation: {timeline.Count} time steps, Total time: {CalculateTotalMoveTime(gridPath):F2}s");
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Test Movement Simulation")]
+    public void TestMovementSimulation()
+    {
+        var testPath = new List<Vector3Int>
+        {
+            new Vector3Int(0, 0, 0),
+            new Vector3Int(3, 0, 0),
+            new Vector3Int(3, 3, 0)
+        };
+
+        Debug.Log("Testing movement simulation...");
+        DebugDrawMovementPreview(testPath, 5f);
+
+        float totalTime = CalculateTotalMoveTime(testPath);
+        Debug.Log($"Total movement time: {totalTime:F2} seconds");
+    }
+#endif
+}using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 캐릭터 간 충돌을 감지하는 시스템
+/// 경로 기반으로 실제 충돌 가능성을 미리 계산합니다
+/// </summary>
+public class CollisionDetector : MonoBehaviour
+{
+    [Header("Collision Settings")]
+    [SerializeField] private float timeStep = 0.1f; // 시뮬레이션 시간 단위
+    [SerializeField] private bool enableDebugMode = true;
+
+    // 참조
+    private LevelLoader levelLoader;
+    private MovementSimulator movementSimulator;
+
+    void Awake()
+    {
+        levelLoader = FindFirstObjectByType<LevelLoader>();
+        movementSimulator = GetComponent<MovementSimulator>();
+
+        if (movementSimulator == null)
+            movementSimulator = gameObject.AddComponent<MovementSimulator>();
+    }
+
+    /// <summary>
+    /// 충돌 결과 데이터
+    /// </summary>
+    [System.Serializable]
+    public struct CollisionResult
+    {
+        public bool hasCollision;
+        public Vector3Int collisionPosition;
+        public float collisionTime;
+        public List<string> involvedCharacters;
+        public string collisionType; // "head-on", "same-tile", "crossing"
+
+        public CollisionResult(bool collision, Vector3Int position = default, float time = 0f,
+                              List<string> characters = null, string type = "unknown")
+        {
+            hasCollision = collision;
+            collisionPosition = position;
+            collisionTime = time;
+            involvedCharacters = characters ?? new List<string>();
+            collisionType = type;
+        }
+    }
+
+    /// <summary>
+    /// 모든 캐릭터의 경로를 검사하여 충돌 가능성을 확인
+    /// </summary>
+    public CollisionResult CheckAllCollisions(Dictionary<string, List<Vector3Int>> characterPaths)
+    {
+        if (characterPaths == null || characterPaths.Count < 2)
+            return new CollisionResult(false);
+
+        // 각 캐릭터의 시간별 위치 시뮬레이션
+        var characterTimelines = new Dictionary<string, List<Vector3>>();
+        float maxTime = 0f;
+
+        foreach (var kvp in characterPaths)
+        {
+            string characterId = kvp.Key;
+            List<Vector3Int> path = kvp.Value;
+
+            if (path == null || path.Count < 2) continue;
+
+            var timeline = movementSimulator.SimulateMovement(path, timeStep);
+            characterTimelines[characterId] = timeline;
+
+            float pathTime = (timeline.Count - 1) * timeStep;
+            if (pathTime > maxTime) maxTime = pathTime;
+        }
+
+        // 시간별로 충돌 검사
+        return CheckTimelineCollisions(characterTimelines, maxTime);
+    }
+
+    /// <summary>
+    /// 두 캐릭터 간의 충돌만 검사 (빠른 검사용)
+    /// </summary>
+    public CollisionResult CheckTwoCharacterCollision(string characterId1, List<Vector3Int> path1,
+                                                      string characterId2, List<Vector3Int> path2)
+    {
+        var paths = new Dictionary<string, List<Vector3Int>>
+        {
+            { characterId1, path1 },
+            { characterId2, path2 }
+        };
+
+        return CheckAllCollisions(paths);
+    }
+
+    /// <summary>
+    /// 시간별 위치 데이터를 바탕으로 충돌 검사
+    /// </summary>
+    private CollisionResult CheckTimelineCollisions(Dictionary<string, List<Vector3>> timelines, float maxTime)
+    {
+        int maxTimeSteps = Mathf.CeilToInt(maxTime / timeStep) + 1;
+
+        for (int timeIndex = 0; timeIndex < maxTimeSteps; timeIndex++)
+        {
+            float currentTime = timeIndex * timeStep;
+            var positionsAtTime = new Dictionary<string, Vector3>();
+
+            // 현재 시간에서 각 캐릭터의 위치 계산
+            foreach (var kvp in timelines)
+            {
+                string characterId = kvp.Key;
+                List<Vector3> timeline = kvp.Value;
+
+                if (timeIndex < timeline.Count)
+                {
+                    positionsAtTime[characterId] = timeline[timeIndex];
+                }
+                else if (timeline.Count > 0)
+                {
+                    // 경로 완료 후에는 마지막 위치에 머물러 있음
+                    positionsAtTime[characterId] = timeline[timeline.Count - 1];
+                }
+            }
+
+            // 현재 시간에서 위치 충돌 검사
+            var collision = CheckPositionCollisions(positionsAtTime, currentTime);
+            if (collision.hasCollision)
+                return collision;
+        }
+
+        return new CollisionResult(false);
+    }
+
+    /// <summary>
+    /// 특정 시간에서 캐릭터들의 위치 충돌 검사
+    /// </summary>
+    private CollisionResult CheckPositionCollisions(Dictionary<string, Vector3> positions, float time)
+    {
+        var characterIds = new List<string>(positions.Keys);
+
+        for (int i = 0; i < characterIds.Count; i++)
+        {
+            for (int j = i + 1; j < characterIds.Count; j++)
+            {
+                string char1 = characterIds[i];
+                string char2 = characterIds[j];
+
+                Vector3 pos1 = positions[char1];
+                Vector3 pos2 = positions[char2];
+
+                // 실제 충돌 판단 (거리 기반)
+                float distance = Vector3.Distance(pos1, pos2);
+                if (distance < 0.3f) // 충돌 임계값
+                {
+                    Vector3Int gridCollisionPos = new Vector3Int(
+                        Mathf.RoundToInt((pos1.x + pos2.x) / 2f),
+                        Mathf.RoundToInt((pos1.y + pos2.y) / 2f),
+                        0
+                    );
+
+                    var involvedCharacters = new List<string> { char1, char2 };
+                    string collisionType = DetermineCollisionType(pos1, pos2);
+
+                    if (enableDebugMode)
+                    {
+                        Debug.Log($"Collision detected at time {time:F1}s between {char1} and {char2}");
+                        Debug.Log($"Positions: {char1}({pos1}) vs {char2}({pos2}), Distance: {distance:F2}");
+                        Debug.Log($"Collision Type: {collisionType}");
+                    }
+
+                    return new CollisionResult(
+                        true,
+                        gridCollisionPos,
+                        time,
+                        involvedCharacters,
+                        collisionType
+                    );
+                }
+            }
+        }
+
+        return new CollisionResult(false);
+    }
+
+    /// <summary>
+    /// 충돌 타입 결정 (정면충돌, 교차, 동일타일점유 등)
+    /// </summary>
+    private string DetermineCollisionType(Vector3 pos1, Vector3 pos2)
+    {
+        float distance = Vector3.Distance(pos1, pos2);
+
+        if (distance < 0.1f)
+            return "same-tile";
+        else if (distance < 0.5f)
+            return "close-proximity";
+        else
+            return "crossing";
+    }
+
+    /// <summary>
+    /// 특정 캐릭터의 경로가 다른 캐릭터들과 충돌하는지 검사
+    /// </summary>
+    public CollisionResult CheckSingleCharacterPath(string characterId, List<Vector3Int> newPath)
+    {
+        if (levelLoader == null) return new CollisionResult(false);
+
+        var allCharacters = levelLoader.GetSpawnedCharacters();
+        var allPaths = new Dictionary<string, List<Vector3Int>>();
+
+        // 다른 캐릭터들의 현재 경로 수집 (실제 구현 시 경로 저장소에서 가져와야 함)
+        foreach (var character in allCharacters)
+        {
+            if (character.GetCharacterId() == characterId)
+            {
+                allPaths[characterId] = newPath;
+            }
+            else
+            {
+                // TODO: 다른 캐릭터들의 설정된 경로를 가져오는 로직 필요
+                // 현재는 시작점만 포함하는 기본 경로로 설정
+                var basicPath = new List<Vector3Int> { character.GetCurrentGridPosition() };
+                allPaths[character.GetCharacterId()] = basicPath;
+            }
+        }
+
+        return CheckAllCollisions(allPaths);
+    }
+
+    /// <summary>
+    /// 충돌 결과를 사용자에게 표시하기 위한 메시지 생성
+    /// </summary>
+    public string GetCollisionMessage(CollisionResult result)
+    {
+        if (!result.hasCollision)
+            return "No collision detected.";
+
+        string characterList = string.Join(" and ", result.involvedCharacters);
+        return $"Collision between {characterList} at {result.collisionPosition} " +
+               $"(Time: {result.collisionTime:F1}s, Type: {result.collisionType})";
+    }
+
+    /// <summary>
+    /// 디버그용: 충돌 시뮬레이션 결과를 시각화
+    /// </summary>
+    public void DebugDrawCollisionPreview(CollisionResult result)
+    {
+        if (!enableDebugMode || !result.hasCollision) return;
+
+        // Scene 뷰에서 충돌 지점 표시
+        Debug.DrawRay(
+            new Vector3(result.collisionPosition.x, result.collisionPosition.y, 0),
+            Vector3.up * 0.5f,
+            Color.red,
+            2f
+        );
+
+        Debug.Log(GetCollisionMessage(result));
+    }
+
+    /// <summary>
+    /// 충돌 감지 설정
+    /// </summary>
+    public void SetCollisionSettings(float newTimeStep, bool debugMode)
+    {
+        timeStep = Mathf.Clamp(newTimeStep, 0.05f, 1f);
+        enableDebugMode = debugMode;
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Test Collision Detection")]
+    public void TestCollisionDetection()
+    {
+        // 테스트용 경로 생성
+        var testPaths = new Dictionary<string, List<Vector3Int>>
+        {
+            { "A", new List<Vector3Int> { new Vector3Int(0, 0, 0), new Vector3Int(1, 0, 0), new Vector3Int(2, 0, 0) } },
+            { "B", new List<Vector3Int> { new Vector3Int(2, 2, 0), new Vector3Int(2, 1, 0), new Vector3Int(2, 0, 0) } }
+        };
+
+        var result = CheckAllCollisions(testPaths);
+        Debug.Log($"Test Result: {GetCollisionMessage(result)}");
+        DebugDrawCollisionPreview(result);
+    }
+#endif
+}using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 경로 검증을 담당하는 시스템
+/// 타일 존재 여부, 장애물, 경로 유효성을 검사합니다
+/// </summary>
+public class PathValidator : MonoBehaviour
+{
+    // 참조
+    private GridVisualizer gridVisualizer;
+    private LevelLoader levelLoader;
+    private LevelData currentLevelData;
+
+    void Awake()
+    {
+        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+        levelLoader = FindFirstObjectByType<LevelLoader>();
+    }
+
+    void Start()
+    {
+        // LevelLoader에서 현재 레벨 데이터 가져오기
+        if (levelLoader != null)
+        {
+            // LevelLoader에 CurrentLevelData 프로퍼티 추가 필요
+            // currentLevelData = levelLoader.GetCurrentLevelData();
+        }
+    }
+
+    /// <summary>
+    /// 레벨 데이터 설정 (LevelLoader에서 호출)
+    /// </summary>
+    public void SetLevelData(LevelData levelData)
+    {
+        currentLevelData = levelData;
+    }
+
+    /// <summary>
+    /// 특정 위치가 이동 가능한지 확인
+    /// </summary>
+    public bool IsValidPosition(Vector3Int position)
+    {
+        // 그리드 범위 확인
+        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(position))
+            return false;
+
+        // 타일 존재 확인
+        if (!HasTileAt(position))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// 특정 위치에 타일이 있는지 확인
+    /// </summary>
+    public bool HasTileAt(Vector3Int position)
+    {
+        if (currentLevelData == null)
+        {
+            Debug.LogWarning("LevelData is not set in PathValidator");
+            return false;
+        }
+
+        return currentLevelData.HasTileAt(position);
+    }
+
+    /// <summary>
+    /// 특정 위치에 장애물이 있는지 확인
+    /// </summary>
+    public bool HasObstacleAt(Vector3Int position, GamePiece excludeCharacter = null)
+    {
+        if (levelLoader == null) return false;
+
+        // 모든 캐릭터 위치는 장애물 (본인 포함)
+        var characterAtPosition = levelLoader.GetCharacterAt(position);
+        if (characterAtPosition != null)
+            return true;
+
+        // 다른 목적지가 있는지 확인 (본인 목적지가 아닌 경우)
+        var goalAtPosition = levelLoader.GetGoalAt(position);
+        if (goalAtPosition != null && excludeCharacter != null)
+        {
+            // 현재 캐릭터가 사용할 수 없는 목적지라면 장애물로 처리
+            if (!goalAtPosition.CanUseGoal(excludeCharacter.GetCharacterId()))
+            {
+                return true;
+            }
+        }
+
+        // 타일이 없으면 장애물로 간주
+        if (!HasTileAt(position))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// 두 위치 사이의 직선 경로에 장애물이 있는지 확인
+    /// </summary>
+    public bool HasObstacleInPath(Vector3Int fromPos, Vector3Int toPos, GamePiece excludeCharacter = null)
+    {
+        // 동서남북이 아닌 경우 무효
+        if (fromPos.x != toPos.x && fromPos.y != toPos.y)
+            return true;
+
+        Vector3Int diff = toPos - fromPos;
+        Vector3Int direction = new Vector3Int(
+            diff.x == 0 ? 0 : (diff.x > 0 ? 1 : -1),
+            diff.y == 0 ? 0 : (diff.y > 0 ? 1 : -1),
+            0
+        );
+
+        Vector3Int currentPos = fromPos + direction;
+
+        // 경로상의 모든 타일 검사
+        while (currentPos != toPos)
+        {
+            if (HasObstacleAt(currentPos, excludeCharacter))
+                return true;
+            currentPos += direction;
+        }
+
+        // 목표 위치도 검사
+        return HasObstacleAt(toPos, excludeCharacter);
+    }
+
+    /// <summary>
+    /// 캐릭터가 특정 방향으로 이동 가능한 최대 거리 계산
+    /// </summary>
+    public List<Vector3Int> GetValidPositionsInDirection(Vector3Int startPos, Vector3Int direction, GamePiece character)
+    {
+        List<Vector3Int> validPositions = new List<Vector3Int>();
+        Vector3Int currentPos = startPos;
+
+        for (int i = 1; i <= 100; i++) // 충분히 큰 값 (또는 while(true)로 무한)
+        {
+            Vector3Int nextPos = currentPos + direction * i;
+
+            // 유효하지 않은 위치면 중단
+            if (!IsValidPosition(nextPos))
+                break;
+
+            // 장애물이 있으면 중단
+            if (HasObstacleAt(nextPos, character))
+                break;
+
+            validPositions.Add(nextPos);
+
+            // 목적지에 도달하면 중단
+            if (IsGoalPosition(nextPos, character))
+                break;
+        }
+
+        return validPositions;
+    }
+
+    /// <summary>
+    /// 특정 위치가 캐릭터의 목적지인지 확인
+    /// </summary>
+    public bool IsGoalPosition(Vector3Int position, GamePiece character)
+    {
+        if (levelLoader == null || character == null) return false;
+
+        var availableGoals = GetAvailableGoalsForCharacter(character);
+        foreach (var goal in availableGoals)
+        {
+            if (goal.GetGridPosition() == position)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 캐릭터가 사용할 수 있는 목적지들 반환
+    /// </summary>
+    public List<GoalController> GetAvailableGoalsForCharacter(GamePiece character)
+    {
+        List<GoalController> availableGoals = new List<GoalController>();
+
+        if (character == null || levelLoader == null) return availableGoals;
+
+        var allGoals = levelLoader.GetSpawnedGoals();
+        string characterId = character.GetCharacterId();
+
+        foreach (var goal in allGoals)
+        {
+            if (goal.CanUseGoal(characterId))
+            {
+                availableGoals.Add(goal);
+            }
+        }
+
+        return availableGoals;
+    }
+
+    /// <summary>
+    /// 마지막-1 선택에서 목적지와 직선거리상에 있는 위치만 필터링
+    /// </summary>
+    public List<Vector3Int> FilterLastSelectionPositions(List<Vector3Int> positions, GamePiece character)
+    {
+        List<Vector3Int> filteredPositions = new List<Vector3Int>();
+
+        var availableGoals = GetAvailableGoalsForCharacter(character);
+
+        foreach (Vector3Int pos in positions)
+        {
+            foreach (var goal in availableGoals)
+            {
+                Vector3Int goalPos = goal.GetGridPosition();
+                // 직선거리상에 있는지 확인 (수평 또는 수직)
+                if (pos.x == goalPos.x || pos.y == goalPos.y)
+                {
+                    // 해당 위치에서 목적지까지 경로에 장애물이 없는지 확인
+                    if (!HasObstacleInPath(pos, goalPos, character))
+                    {
+                        filteredPositions.Add(pos);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return filteredPositions;
+    }
+
+    /// <summary>
+    /// 전체 경로의 유효성 검사
+    /// </summary>
+    public bool ValidateCompletePath(List<Vector3Int> path, GamePiece character)
+    {
+        if (path == null || path.Count < 2 || character == null)
+            return false;
+
+        // 각 구간별 유효성 검사
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            Vector3Int fromPos = path[i];
+            Vector3Int toPos = path[i + 1];
+
+            // 직선 이동인지 확인
+            if (fromPos.x != toPos.x && fromPos.y != toPos.y)
+            {
+                Debug.LogWarning($"Invalid path: diagonal movement from {fromPos} to {toPos}");
+                return false;
+            }
+
+            // 경로상에 장애물이 있는지 확인
+            if (HasObstacleInPath(fromPos, toPos, character))
+            {
+                Debug.LogWarning($"Invalid path: obstacle in path from {fromPos} to {toPos}");
+                return false;
+            }
+        }
+
+        // 마지막 위치가 목적지인지 확인
+        Vector3Int finalPos = path[path.Count - 1];
+        if (!IsGoalPosition(finalPos, character))
+        {
+            Debug.LogWarning($"Invalid path: final position {finalPos} is not a valid goal for character {character.GetCharacterId()}");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 디버그용: 경로 정보 출력
+    /// </summary>
+    public void DebugLogPath(List<Vector3Int> path, string pathName = "Path")
+    {
+        if (path == null || path.Count == 0)
+        {
+            Debug.Log($"{pathName}: Empty or null");
+            return;
+        }
+
+        string pathString = string.Join(" -> ", path);
+        Debug.Log($"{pathName}: {pathString} (Length: {path.Count})");
+
+        // 각 구간의 유효성도 체크
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            Vector3Int from = path[i];
+            Vector3Int to = path[i + 1];
+            bool hasObstacle = HasObstacleInPath(from, to);
+            Debug.Log($"  Segment {i}: {from} -> {to}, HasObstacle: {hasObstacle}");
+        }
+    }
+}using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// 캐릭터의 경로 선택을 관리하는 시스템
-/// Line Renderer로 가능한 경로를 표시하고 Flag로 경로점을 설정합니다
+/// 새로운 아키텍처: PathValidator, CollisionDetector, MovementSimulator와 연동
 /// </summary>
 public class PathSelectionManager : MonoBehaviour
 {
@@ -11,14 +1823,19 @@ public class PathSelectionManager : MonoBehaviour
     [SerializeField] private Material pathLineMaterial;
     [SerializeField] private Color availablePathColor = Color.yellow;
     [SerializeField] private Color selectedPathColor = Color.green;
+    [SerializeField] private Color invalidPathColor = Color.red;
     [SerializeField] private float lineWidth = 0.1f;
 
     [Header("Flag Settings")]
     [SerializeField] private GameObject flagPrefab;
     [SerializeField] private float flagScale = 0.5f;
 
+    [Header("Collision Feedback")]
+    [SerializeField] private bool showCollisionWarnings = true;
+    [SerializeField] private Color collisionWarningColor = Color.red;
+
     // 현재 선택된 캐릭터
-    private CharacterController currentCharacter;
+    private GamePiece currentCharacter;
 
     // 경로 관리
     private List<Vector3Int> currentPath = new List<Vector3Int>();
@@ -26,16 +1843,35 @@ public class PathSelectionManager : MonoBehaviour
     private List<LineRenderer> availablePathLines = new List<LineRenderer>();
     private LineRenderer finalPathLine;
 
-    // 참조
+    // 새로운 아키텍처 참조
+    private PathValidator pathValidator;
+    private CollisionDetector collisionDetector;
+    private MovementSimulator movementSimulator;
+
+    // 기존 참조
     private GridVisualizer gridVisualizer;
     private LevelLoader levelLoader;
     private TouchInputManager touchInputManager;
 
     void Awake()
     {
+        // 기존 참조
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
         levelLoader = FindFirstObjectByType<LevelLoader>();
         touchInputManager = FindFirstObjectByType<TouchInputManager>();
+
+        // 새 시스템 참조 (같은 GameObject에 있다고 가정)
+        pathValidator = GetComponent<PathValidator>();
+        collisionDetector = GetComponent<CollisionDetector>();
+        movementSimulator = GetComponent<MovementSimulator>();
+
+        // 없으면 자동 생성
+        if (pathValidator == null)
+            pathValidator = gameObject.AddComponent<PathValidator>();
+        if (collisionDetector == null)
+            collisionDetector = gameObject.AddComponent<CollisionDetector>();
+        if (movementSimulator == null)
+            movementSimulator = gameObject.AddComponent<MovementSimulator>();
 
         // 최종 경로 Line Renderer 생성
         CreateFinalPathLineRenderer();
@@ -44,7 +1880,7 @@ public class PathSelectionManager : MonoBehaviour
     /// <summary>
     /// 캐릭터 선택 시 경로 선택 모드 시작
     /// </summary>
-    public void StartPathSelection(CharacterController character)
+    public void StartPathSelection(GamePiece character)
     {
         if (character == null) return;
 
@@ -70,7 +1906,7 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 특정 위치 선택 처리
+    /// 특정 위치 선택 처리 (좌표 변환 수정됨)
     /// </summary>
     public void SelectPosition(Vector3Int gridPosition)
     {
@@ -81,9 +1917,7 @@ public class PathSelectionManager : MonoBehaviour
         // 선택 가능한 위치인지 확인
         if (!IsValidSelection(currentPos, gridPosition))
         {
-            Debug.Log($"Invalid position selected: from {currentPos} to {gridPosition}");
-            Debug.Log($"Current character: {currentCharacter?.GetCharacterId()}");
-            Debug.Log($"Path count: {currentPath.Count}, Remaining: {currentCharacter?.GetRemainingSelections()}");
+            ShowInvalidSelectionFeedback(gridPosition);
             return;
         }
 
@@ -96,7 +1930,7 @@ public class PathSelectionManager : MonoBehaviour
         // 남은 선택 횟수 확인
         int remainingSelections = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
 
-        if (remainingSelections <= 0 || IsGoalPosition(gridPosition))
+        if (remainingSelections <= 0 || pathValidator.IsGoalPosition(gridPosition, currentCharacter))
         {
             // 경로 완성
             CompletePath();
@@ -109,7 +1943,49 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 위치에서 가능한 모든 경로 표시
+    /// 유효한 선택인지 확인 (PathValidator 사용)
+    /// </summary>
+    private bool IsValidSelection(Vector3Int fromPos, Vector3Int toPos)
+    {
+        // 기본 검증
+        if (fromPos.x != toPos.x && fromPos.y != toPos.y) return false;
+        if (fromPos == toPos) return false;
+
+        // 경로 유효성 검사
+        if (!pathValidator.IsValidPosition(toPos) ||
+            pathValidator.HasObstacleInPath(fromPos, toPos, currentCharacter))
+            return false;
+
+        int remaining = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
+
+        // 마지막 선택일 때는 반드시 Goal이어야 함
+        if (remaining == 1)
+        {
+            return pathValidator.IsGoalPosition(toPos, currentCharacter);
+        }
+
+        // 마지막-1 선택일 때는 Goal과 직선상에 있어야 함 (추가 필요)
+        if (remaining == 2)
+        {
+            var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
+            foreach (var goal in availableGoals)
+            {
+                Vector3Int goalPos = goal.GetGridPosition();
+                // Goal과 직선상에 있고 경로에 장애물이 없으면 허용
+                if ((toPos.x == goalPos.x || toPos.y == goalPos.y) &&
+                    !pathValidator.HasObstacleInPath(toPos, goalPos, currentCharacter))
+                {
+                    return true;
+                }
+            }
+            return false; // 어떤 Goal과도 직선상에 있지 않으면 거부
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 현재 위치에서 가능한 모든 경로 표시 (PathValidator 사용)
     /// </summary>
     private void ShowAvailablePaths()
     {
@@ -133,69 +2009,168 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 특정 방향으로 가능한 경로 표시
+    /// 특정 방향으로 가능한 경로 표시 (PathValidator 사용)
     /// </summary>
     private void ShowDirectionPath(Vector3Int startPos, Vector3Int direction, int remainingSelections)
     {
-        List<Vector3Int> pathPositions = new List<Vector3Int>();
-        Vector3Int currentPos = startPos;
+        Debug.Log($"ShowDirectionPath - startPos: {startPos}, direction: {direction}, remainingSelections: {remainingSelections}");
 
-        // 해당 방향으로 이동 가능한 모든 위치 찾기
-        for (int i = 1; i <= 10; i++) // 최대 10칸까지 (조정 가능)
-        {
-            Vector3Int nextPos = currentPos + direction * i;
+        // PathValidator를 사용하여 해당 방향의 유효한 위치들 가져오기
+        List<Vector3Int> pathPositions = pathValidator.GetValidPositionsInDirection(
+    startPos, direction, currentCharacter);
 
-            // 유효성 검사
-            if (!IsValidPosition(nextPos)) break;
-            if (HasObstacle(nextPos)) break;
+        Debug.Log($"Before filtering - pathPositions count: {pathPositions.Count}");
 
-            pathPositions.Add(nextPos);
-
-            // 목적지에 도달하면 경로 완성
-            if (IsGoalPosition(nextPos)) break;
-        }
-
-        // 마지막-1 선택 제약 확인
+        // 마지막 선택 (remainingSelections == 1): Goal만 표시
         if (remainingSelections == 1)
         {
-            pathPositions = FilterLastSelectionPositions(pathPositions);
+            Debug.Log("Applying FINAL selection filter - Only goals should be shown");
+            // Goal 위치만 필터링
+            List<Vector3Int> goalOnlyPositions = new List<Vector3Int>();
+            var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
+
+            foreach (var goal in availableGoals)
+            {
+                Vector3Int goalPos = goal.GetGridPosition();
+                if (pathPositions.Contains(goalPos))
+                {
+                    goalOnlyPositions.Add(goalPos);
+                }
+            }
+            pathPositions = goalOnlyPositions;
+            Debug.Log($"Final selection - only goals: {pathPositions.Count} positions");
+        }
+        // 마지막-1 선택 (remainingSelections == 2): Goal과 직선상인 곳만
+        else if (remainingSelections == 2)
+        {
+            Debug.Log("Applying LAST-1 selection filter - Only positions in line with goals");
+            pathPositions = pathValidator.FilterLastSelectionPositions(pathPositions, currentCharacter);
+            Debug.Log($"Last-1 selection filtered: {pathPositions.Count} positions");
         }
 
         if (pathPositions.Count > 0)
         {
             CreateAvailablePathLine(startPos, pathPositions);
         }
+        else
+        {
+            Debug.Log($"No valid positions after filtering for direction {direction}");
+        }
     }
 
     /// <summary>
-    /// 마지막-1 선택에서 목적지와 직선거리상에 있는 위치만 필터링
+    /// 완성된 경로의 충돌 검사
     /// </summary>
-    private List<Vector3Int> FilterLastSelectionPositions(List<Vector3Int> positions)
+    private bool ValidateCompletePathWithCollision()
     {
-        List<Vector3Int> filteredPositions = new List<Vector3Int>();
+        if (currentPath.Count < 2 || collisionDetector == null) return true;
 
-        // 캐릭터가 갈 수 있는 목적지들 찾기
-        var availableGoals = GetAvailableGoalsForCharacter();
+        // 경로 자체의 유효성 검사
+        if (!pathValidator.ValidateCompletePath(currentPath, currentCharacter))
+            return false;
 
-        foreach (Vector3Int pos in positions)
+        // 충돌 검사 수행
+        var collisionResult = collisionDetector.CheckSingleCharacterPath(
+            currentCharacter.GetCharacterId(),
+            currentPath
+        );
+
+        if (collisionResult.hasCollision)
         {
-            foreach (var goal in availableGoals)
-            {
-                // 직선거리상에 있는지 확인 (수평 또는 수직)
-                Vector3Int goalPos = goal.GetGridPosition();
-                if (pos.x == goalPos.x || pos.y == goalPos.y)
-                {
-                    filteredPositions.Add(pos);
-                    break;
-                }
-            }
+            Debug.LogWarning($"Collision detected: {collisionDetector.GetCollisionMessage(collisionResult)}");
+            return false;
         }
 
-        return filteredPositions;
+        return true;
     }
 
     /// <summary>
-    /// 가능한 경로 Line Renderer 생성
+    /// 잘못된 선택에 대한 피드백 표시
+    /// </summary>
+    private void ShowInvalidSelectionFeedback(Vector3Int gridPosition)
+    {
+        // 진동 또는 사운드 효과 (모바일)
+        if (Application.isMobilePlatform)
+        {
+            Handheld.Vibrate();
+        }
+
+        // 시각적 피드백
+        StartCoroutine(ShowInvalidPositionEffect(gridPosition));
+
+        Debug.Log($"Invalid selection at {gridPosition}");
+    }
+
+    /// <summary>
+    /// 충돌 경고 표시
+    /// </summary>
+    private void ShowCollisionWarning()
+    {
+        if (!showCollisionWarnings) return;
+
+        // UI 메시지나 시각적 피드백 표시
+        Debug.LogWarning("Path would cause collision with other characters!");
+
+        if (Application.isMobilePlatform)
+        {
+            Handheld.Vibrate();
+        }
+    }
+
+    /// <summary>
+    /// 잘못된 위치 선택 시 시각 효과
+    /// </summary>
+    private System.Collections.IEnumerator ShowInvalidPositionEffect(Vector3Int gridPosition)
+    {
+        if (gridVisualizer == null) yield break;
+
+        // 빨간색 임시 마커 생성
+        GameObject tempMarker = new GameObject("InvalidMarker");
+        tempMarker.transform.position = gridVisualizer.GridToWorldPosition(gridPosition);
+
+        var renderer = tempMarker.AddComponent<SpriteRenderer>();
+        renderer.sprite = CreateSimpleSquareSprite();
+        renderer.color = invalidPathColor;
+        renderer.sortingOrder = 25;
+
+        // 크기 애니메이션
+        Vector3 originalScale = Vector3.one * 0.5f;
+        Vector3 targetScale = Vector3.one * 1.2f;
+
+        float duration = 0.3f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            tempMarker.transform.localScale = Vector3.Lerp(originalScale, targetScale, t);
+            renderer.color = Color.Lerp(invalidPathColor, Color.clear, t);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(tempMarker);
+    }
+
+    /// <summary>
+    /// 간단한 정사각형 스프라이트 생성 (임시 마커용)
+    /// </summary>
+    private Sprite CreateSimpleSquareSprite()
+    {
+        Texture2D texture = new Texture2D(32, 32);
+        Color[] pixels = new Color[32 * 32];
+        for (int i = 0; i < pixels.Length; i++)
+            pixels[i] = Color.white;
+
+        texture.SetPixels(pixels);
+        texture.Apply();
+
+        return Sprite.Create(texture, new Rect(0, 0, 32, 32), Vector2.one * 0.5f);
+    }
+
+    /// <summary>
+    /// 가능한 경로 Line Renderer 생성 (기존 코드 유지하되 색상 로직 개선)
     /// </summary>
     private void CreateAvailablePathLine(Vector3Int startPos, List<Vector3Int> pathPositions)
     {
@@ -226,6 +2201,65 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 경로 완성 처리
+    /// </summary>
+    private void CompletePath()
+    {
+        if (currentCharacter == null) return;
+
+        // 가능한 경로 라인들 숨기기
+        ClearAvailablePathLines();
+
+        // 최종 경로 표시
+        ShowFinalPath();
+
+        // 경로 저장 (동시 이동용)
+        SaveCompletedPath();
+
+        // 캐릭터를 완료 상태로 변경
+        SetCharacterCompleted(currentCharacter);
+
+        // 1초 후 정리 및 해제
+        Invoke(nameof(CompleteCleanup), 1f);
+
+        pathValidator.DebugLogPath(currentPath, $"Completed path for {currentCharacter.GetCharacterId()}");
+    }
+    private void CompleteCleanup()
+    {
+        // Flag들과 최종 경로 라인 정리
+        ClearFinalPath();
+        ClearFlags();
+
+        // Goal 하이라이트도 정리 (추가)
+        if (touchInputManager != null)
+        {
+            touchInputManager.ClearSelection(); // 이것만 추가하면 됨
+        }
+
+        // 선택 해제
+        currentCharacter = null;
+        currentPath.Clear();
+    }
+
+    /// <summary>
+    /// 완성된 경로 저장 (추후 동시 이동용)
+    /// </summary>
+    private void SaveCompletedPath()
+    {
+        // TODO: 나중에 GameManager나 별도 시스템에서 관리
+        Debug.Log($"Saved path for {currentCharacter.GetCharacterId()}: {string.Join(" -> ", currentPath)}");
+    }
+
+    /// <summary>
+    /// 캐릭터를 완료 상태로 설정
+    /// </summary>
+    private void SetCharacterCompleted(GamePiece character)
+    {
+        character.SetCompleted(true);
+    }
+    // === 기존 메서드들 (수정 최소화) ===
+
+    /// <summary>
     /// Flag 생성
     /// </summary>
     private void CreateFlag(Vector3Int gridPosition)
@@ -238,23 +2272,6 @@ public class PathSelectionManager : MonoBehaviour
         flag.name = $"Flag_{pathFlags.Count}";
 
         pathFlags.Add(flag);
-    }
-
-    /// <summary>
-    /// 경로 완성 처리
-    /// </summary>
-    private void CompletePath()
-    {
-        // 가능한 경로 라인들 숨기기
-        ClearAvailablePathLines();
-
-        // 최종 경로 표시
-        ShowFinalPath();
-
-        // 1초 후 정리
-        Invoke(nameof(ClearFinalPath), 1f);
-
-        Debug.Log($"Path completed for {currentCharacter.GetCharacterId()}: {string.Join(" -> ", currentPath)}");
     }
 
     /// <summary>
@@ -291,110 +2308,6 @@ public class PathSelectionManager : MonoBehaviour
         finalPathLine.sortingOrder = 20;
         finalPathLine.useWorldSpace = true;
         finalPathLine.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// 유효한 선택인지 확인
-    /// </summary>
-    private bool IsValidSelection(Vector3Int fromPos, Vector3Int toPos)
-    {
-        // 동서남북 직선상에 있는지 확인
-        if (fromPos.x != toPos.x && fromPos.y != toPos.y) return false;
-
-        // 같은 위치가 아닌지 확인
-        if (fromPos == toPos) return false;
-
-        // 유효한 그리드 위치인지 확인
-        if (!IsValidPosition(toPos)) return false;
-
-        // 경로상에 장애물이 없는지 확인
-        return !HasObstacleInPath(fromPos, toPos);
-    }
-
-    /// <summary>
-    /// 유효한 그리드 위치인지 확인
-    /// </summary>
-    private bool IsValidPosition(Vector3Int position)
-    {
-        if (gridVisualizer == null) return false;
-        return gridVisualizer.IsValidGridPosition(position);
-    }
-
-    /// <summary>
-    /// 특정 위치에 장애물이 있는지 확인
-    /// </summary>
-    private bool HasObstacle(Vector3Int position)
-    {
-        if (levelLoader == null) return false;
-
-        // 다른 캐릭터가 있는지 확인
-        var otherCharacter = levelLoader.GetCharacterAt(position);
-        if (otherCharacter != null && otherCharacter != currentCharacter)
-            return true;
-
-        // 타일이 없는지 확인 (LevelData 기반)
-        // 추후 구현 필요
-
-        return false;
-    }
-
-    /// <summary>
-    /// 두 위치 사이 경로에 장애물이 있는지 확인
-    /// </summary>
-    private bool HasObstacleInPath(Vector3Int fromPos, Vector3Int toPos)
-    {
-        Vector3Int diff = toPos - fromPos;
-        Vector3Int direction = new Vector3Int(
-            diff.x == 0 ? 0 : (diff.x > 0 ? 1 : -1),
-            diff.y == 0 ? 0 : (diff.y > 0 ? 1 : -1),
-            0
-        );
-        Vector3Int currentPos = fromPos + direction;
-
-        while (currentPos != toPos)
-        {
-            if (HasObstacle(currentPos)) return true;
-            currentPos += direction;
-        }
-
-        return HasObstacle(toPos);
-    }
-
-    /// <summary>
-    /// 목적지 위치인지 확인
-    /// </summary>
-    private bool IsGoalPosition(Vector3Int position)
-    {
-        var availableGoals = GetAvailableGoalsForCharacter();
-        foreach (var goal in availableGoals)
-        {
-            if (goal.GetGridPosition() == position)
-                return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// 현재 캐릭터가 갈 수 있는 목적지들 반환
-    /// </summary>
-    private List<GoalController> GetAvailableGoalsForCharacter()
-    {
-        List<GoalController> availableGoals = new List<GoalController>();
-
-        if (currentCharacter == null || levelLoader == null) return availableGoals;
-
-        var allGoals = levelLoader.GetSpawnedGoals();
-        string characterId = currentCharacter.GetCharacterId();
-
-        foreach (var goal in allGoals)
-        {
-            if (goal.CanUseGoal(characterId))
-            {
-                availableGoals.Add(goal);
-            }
-        }
-
-        return availableGoals;
     }
 
     /// <summary>
@@ -457,11 +2370,20 @@ public class PathSelectionManager : MonoBehaviour
     {
         return currentCharacter != null;
     }
+
+    /// <summary>
+    /// 현재 선택된 캐릭터 반환
+    /// </summary>
+    public GamePiece GetCurrentCharacter()
+    {
+        return currentCharacter;
+    }
 }using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// LevelData를 읽어서 Scene에 캐릭터와 목적지를 배치하는 시스템
+/// 새로운 아키텍처와의 연동을 위해 수정됨
 /// </summary>
 public class LevelLoader : MonoBehaviour
 {
@@ -477,15 +2399,25 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private Transform goalsParent;
 
     // 런타임에 생성된 오브젝트들
-    private List<CharacterController> spawnedCharacters = new List<CharacterController>();
+    private List<GamePiece> spawnedCharacters = new List<GamePiece>();
     private List<GoalController> spawnedGoals = new List<GoalController>();
 
     // 참조
     private GridVisualizer gridVisualizer;
 
+    // 새로운 시스템들에 대한 참조
+    private PathValidator pathValidator;
+    private CollisionDetector collisionDetector;
+    private MovementSimulator movementSimulator;
+
     void Awake()
     {
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
+
+        // 새로운 시스템들 찾기
+        pathValidator = FindFirstObjectByType<PathValidator>();
+        collisionDetector = FindFirstObjectByType<CollisionDetector>();
+        movementSimulator = FindFirstObjectByType<MovementSimulator>();
 
         // 부모 오브젝트가 없으면 생성
         if (charactersParent == null)
@@ -525,6 +2457,9 @@ public class LevelLoader : MonoBehaviour
 
         currentLevelData = levelData;
 
+        // 새로운 시스템들에 레벨 데이터 전달
+        NotifySystemsOfLevelData();
+
         // GridVisualizer 설정 업데이트
         UpdateGridVisualizerSettings();
 
@@ -539,6 +2474,32 @@ public class LevelLoader : MonoBehaviour
 
         Debug.Log($"Level {levelData.levelNumber} loaded successfully!");
         LogLevelStatus();
+    }
+
+    /// <summary>
+    /// 새로운 시스템들에 레벨 데이터 전달
+    /// </summary>
+    private void NotifySystemsOfLevelData()
+    {
+        if (pathValidator != null)
+        {
+            pathValidator.SetLevelData(currentLevelData);
+        }
+
+        if (movementSimulator != null)
+        {
+            movementSimulator.SetLevelData(currentLevelData);
+        }
+
+        // CollisionDetector는 다른 시스템들을 통해 간접적으로 데이터를 받음
+    }
+
+    /// <summary>
+    /// 현재 레벨 데이터 반환 (다른 시스템에서 사용)
+    /// </summary>
+    public LevelData GetCurrentLevelData()
+    {
+        return currentLevelData;
     }
 
     /// <summary>
@@ -570,13 +2531,20 @@ public class LevelLoader : MonoBehaviour
     {
         if (gridVisualizer == null) return;
 
-        // GridVisualizer의 설정을 직접 업데이트하려면 public 필드나 메서드 필요
-        // 현재는 수동으로 설정하도록 안내
+        // 수동으로 설정하도록 안내 (GridVisualizer에 public 설정 메서드가 있다면 여기서 호출)
         Debug.Log($"Please update GridVisualizer settings:");
         Debug.Log($"Grid Width: {currentLevelData.gridWidth}");
         Debug.Log($"Grid Height: {currentLevelData.gridHeight}");
         Debug.Log($"Cell Size: {currentLevelData.cellSize}");
         Debug.Log($"Grid Origin: {currentLevelData.gridOrigin}");
+
+        // GridVisualizer에 설정 업데이트 메서드가 있다면 주석 해제
+        // gridVisualizer.UpdateGridSettings(
+        //     currentLevelData.gridWidth, 
+        //     currentLevelData.gridHeight,
+        //     currentLevelData.cellSize,
+        //     currentLevelData.gridOrigin
+        // );
     }
 
     /// <summary>
@@ -605,14 +2573,14 @@ public class LevelLoader : MonoBehaviour
 
             GameObject characterObj = Instantiate(characterPrefab, worldPosition, Quaternion.identity, charactersParent);
 
-            // CharacterController 컴포넌트 설정
-            CharacterController characterController = characterObj.GetComponent<CharacterController>();
-            if (characterController == null)
+            // GamePiece 컴포넌트 설정
+            GamePiece GamePiece = characterObj.GetComponent<GamePiece>();
+            if (GamePiece == null)
             {
-                characterController = characterObj.AddComponent<CharacterController>();
+                GamePiece = characterObj.AddComponent<GamePiece>();
             }
 
-            characterController.Initialize(
+            GamePiece.Initialize(
                 characterData.characterId,
                 characterData.startPosition,
                 characterData.maxSelections,
@@ -620,8 +2588,10 @@ public class LevelLoader : MonoBehaviour
                 currentLevelData.moveSpeed
             );
 
-            spawnedCharacters.Add(characterController);
+            spawnedCharacters.Add(GamePiece);
         }
+
+        Debug.Log($"Spawned {spawnedCharacters.Count} characters");
     }
 
     /// <summary>
@@ -669,6 +2639,8 @@ public class LevelLoader : MonoBehaviour
 
             spawnedGoals.Add(goalController);
         }
+
+        Debug.Log($"Spawned {spawnedGoals.Count} goals");
     }
 
     /// <summary>
@@ -700,6 +2672,8 @@ public class LevelLoader : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log("Character-Goal assignments completed");
     }
 
     /// <summary>
@@ -710,6 +2684,7 @@ public class LevelLoader : MonoBehaviour
         Debug.Log($"=== Level Status ===");
         Debug.Log($"Characters spawned: {spawnedCharacters.Count}");
         Debug.Log($"Goals spawned: {spawnedGoals.Count}");
+        Debug.Log($"Systems connected: PathValidator={pathValidator != null}, CollisionDetector={collisionDetector != null}, MovementSimulator={movementSimulator != null}");
 
         foreach (var character in spawnedCharacters)
         {
@@ -725,9 +2700,9 @@ public class LevelLoader : MonoBehaviour
     /// <summary>
     /// 생성된 캐릭터 목록 반환
     /// </summary>
-    public List<CharacterController> GetSpawnedCharacters()
+    public List<GamePiece> GetSpawnedCharacters()
     {
-        return new List<CharacterController>(spawnedCharacters);
+        return new List<GamePiece>(spawnedCharacters);
     }
 
     /// <summary>
@@ -741,7 +2716,7 @@ public class LevelLoader : MonoBehaviour
     /// <summary>
     /// 특정 위치에 있는 캐릭터 찾기
     /// </summary>
-    public CharacterController GetCharacterAt(Vector3Int gridPosition)
+    public GamePiece GetCharacterAt(Vector3Int gridPosition)
     {
         return spawnedCharacters.Find(c => c.GetCurrentGridPosition() == gridPosition);
     }
@@ -752,6 +2727,47 @@ public class LevelLoader : MonoBehaviour
     public GoalController GetGoalAt(Vector3Int gridPosition)
     {
         return spawnedGoals.Find(g => g.GetGridPosition() == gridPosition);
+    }
+
+    /// <summary>
+    /// 캐릭터 ID로 캐릭터 찾기
+    /// </summary>
+    public GamePiece GetCharacterById(string characterId)
+    {
+        return spawnedCharacters.Find(c => c.GetCharacterId() == characterId);
+    }
+
+    /// <summary>
+    /// 모든 캐릭터의 현재 상태 확인 (디버깅용)
+    /// </summary>
+    public void LogAllCharacterStates()
+    {
+        Debug.Log("=== All Character States ===");
+        foreach (var character in spawnedCharacters)
+        {
+            Vector3Int pos = character.GetCurrentGridPosition();
+            Debug.Log($"{character.GetCharacterId()}: Position({pos}), Remaining({character.GetRemainingSelections()}), Moving({character.IsMoving()})");
+        }
+    }
+
+    /// <summary>
+    /// 레벨 완료 조건 검사 (나중에 구현)
+    /// </summary>
+    public bool CheckLevelComplete()
+    {
+        // TODO: 모든 캐릭터가 목적지에 도달했는지 확인하는 로직
+        return false;
+    }
+
+    /// <summary>
+    /// 레벨 리셋 (테스트용)
+    /// </summary>
+    public void ResetLevel()
+    {
+        if (currentLevelData != null)
+        {
+            LoadLevel(currentLevelData);
+        }
     }
 
 #if UNITY_EDITOR
@@ -766,6 +2782,23 @@ public class LevelLoader : MonoBehaviour
         {
             Debug.LogWarning("No current level data to reload!");
         }
+    }
+
+    [ContextMenu("Log All Character States")]
+    public void EditorLogAllCharacterStates()
+    {
+        LogAllCharacterStates();
+    }
+
+    [ContextMenu("Test System Connections")]
+    public void TestSystemConnections()
+    {
+        Debug.Log("=== System Connection Test ===");
+        Debug.Log($"GridVisualizer: {gridVisualizer != null}");
+        Debug.Log($"PathValidator: {pathValidator != null}");
+        Debug.Log($"CollisionDetector: {collisionDetector != null}");
+        Debug.Log($"MovementSimulator: {movementSimulator != null}");
+        Debug.Log($"Current Level Data: {currentLevelData != null}");
     }
 #endif
 }using System.Collections.Generic;
@@ -786,7 +2819,6 @@ public class GoalController : MonoBehaviour
 
     [Header("Visual")]
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private bool showAssignedCharacters = true;
 
     // 할당된 캐릭터들
     private List<string> assignedCharacterIds = new List<string>();
@@ -1006,202 +3038,6 @@ public class GoalController : MonoBehaviour
         }
 
         UnityEditor.Handles.Label(transform.position + Vector3.up * 1.2f, info);
-    }
-#endif
-}using UnityEngine;
-
-/// <summary>
-/// 캐릭터의 기본 동작과 상태를 관리하는 컨트롤러
-/// </summary>
-public class CharacterController : MonoBehaviour
-{
-    [Header("Character Info")]
-    [SerializeField] private string characterId;
-    [SerializeField] private int maxSelections = 3;
-    [SerializeField] private Color characterColor = Color.red;
-
-    [Header("Movement")]
-    [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private Vector3Int currentGridPosition;
-
-    [Header("Visual")]
-    [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private bool isSelected = false;
-
-    // 상태 관리
-    private bool isMoving = false;
-    private int remainingSelections;
-
-    // 참조
-    private GridVisualizer gridVisualizer;
-
-    void Awake()
-    {
-        // 컴포넌트 자동 할당
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponent<SpriteRenderer>();
-
-        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
-
-        remainingSelections = maxSelections;
-    }
-
-    void Start()
-    {
-        // 초기 설정
-        SetupCharacter();
-        UpdateVisual();
-    }
-
-    /// <summary>
-    /// 캐릭터 초기 설정
-    /// </summary>
-    public void Initialize(string id, Vector3Int startPos, int maxSel, Color color, float speed = 2f)
-    {
-        characterId = id;
-        currentGridPosition = startPos;
-        maxSelections = maxSel;
-        remainingSelections = maxSel;
-        characterColor = color;
-        moveSpeed = speed;
-
-        SetupCharacter();
-        UpdateVisual();
-    }
-
-    /// <summary>
-    /// 캐릭터 기본 설정 적용
-    /// </summary>
-    private void SetupCharacter()
-    {
-        gameObject.name = $"Character_{characterId}";
-
-        // 그리드 좌표를 월드 좌표로 변환하여 위치 설정
-        if (gridVisualizer != null)
-        {
-            Vector3 worldPos = gridVisualizer.GridToWorldPosition(currentGridPosition);
-            transform.position = worldPos;
-        }
-
-        // 스프라이트 렌더러 설정
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = characterColor;
-            spriteRenderer.sortingOrder = 10; // 타일보다 위에 표시
-        }
-    }
-
-    /// <summary>
-    /// 시각적 표현 업데이트 (선택 상태 등)
-    /// </summary>
-    private void UpdateVisual()
-    {
-        if (spriteRenderer == null) return;
-
-        // 선택된 상태일 때 더 밝게 표시
-        if (isSelected)
-        {
-            spriteRenderer.color = characterColor * 1.3f;
-            transform.localScale = Vector3.one * 1.1f;
-        }
-        else
-        {
-            spriteRenderer.color = characterColor;
-            transform.localScale = Vector3.one;
-        }
-    }
-
-    /// <summary>
-    /// 캐릭터 선택/해제
-    /// </summary>
-    public void SetSelected(bool selected)
-    {
-        isSelected = selected;
-        UpdateVisual();
-    }
-
-    /// <summary>
-    /// 현재 위치에서 특정 방향으로 이동 가능한지 확인
-    /// </summary>
-    public bool CanMoveToDirection(Vector3Int direction)
-    {
-        if (remainingSelections <= 0) return false;
-        if (isMoving) return false;
-
-        Vector3Int targetPosition = currentGridPosition + direction;
-
-        // 그리드 범위 확인
-        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// 특정 위치로 이동 가능한지 확인
-    /// </summary>
-    public bool CanMoveToPosition(Vector3Int targetPosition)
-    {
-        if (remainingSelections <= 0) return false;
-        if (isMoving) return false;
-
-        // 그리드 범위 확인
-        if (gridVisualizer != null && !gridVisualizer.IsValidGridPosition(targetPosition))
-            return false;
-
-        return true;
-    }
-
-    /// <summary>
-    /// 남은 선택 횟수 반환
-    /// </summary>
-    public int GetRemainingSelections()
-    {
-        return remainingSelections;
-    }
-
-    /// <summary>
-    /// 현재 그리드 위치 반환
-    /// </summary>
-    public Vector3Int GetCurrentGridPosition()
-    {
-        return currentGridPosition;
-    }
-
-    /// <summary>
-    /// 캐릭터 ID 반환
-    /// </summary>
-    public string GetCharacterId()
-    {
-        return characterId;
-    }
-
-    /// <summary>
-    /// 이동 중인지 확인
-    /// </summary>
-    public bool IsMoving()
-    {
-        return isMoving;
-    }
-
-    /// <summary>
-    /// 디버그 정보 출력
-    /// </summary>
-    public void LogCharacterInfo()
-    {
-        Debug.Log($"Character {characterId}: Position({currentGridPosition}), Remaining({remainingSelections}), Moving({isMoving})");
-    }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        // 에디터에서 선택시 현재 위치에 기즈모 표시
-        Gizmos.color = characterColor;
-        Gizmos.DrawWireSphere(transform.position, 0.3f);
-
-        // 그리드 위치 정보 표시
-        UnityEditor.Handles.Label(transform.position + Vector3.up * 0.7f,
-            $"{characterId}\n({currentGridPosition.x},{currentGridPosition.y})\nSel: {remainingSelections}");
     }
 #endif
 }using System;
@@ -1492,9 +3328,6 @@ public class LevelGenerator : MonoBehaviour
     [Header("Goal Setup")]
     [SerializeField] private List<GoalSetup> goalSetups = new List<GoalSetup>();
 
-    [Header("Grid Visualization")]
-    [SerializeField] private GridVisualizer gridVisualizer;
-
     [System.Serializable]
     public struct CharacterSetup
     {
@@ -1541,10 +3374,6 @@ public class LevelGenerator : MonoBehaviour
             if (tilemaps.Length > 0)
                 tilemap = tilemaps[0];
         }
-
-        // GridVisualizer 설정
-        if (gridVisualizer == null)
-            gridVisualizer = GetComponent<GridVisualizer>();
     }
 
 #if UNITY_EDITOR
@@ -1583,17 +3412,9 @@ public class LevelGenerator : MonoBehaviour
         levelData.moveSpeed = moveSpeed;
         levelData.showGridInGame = showGridInGame;
 
-        // 그리드 설정
-        if (gridVisualizer != null)
-        {
-            levelData.cellSize = grid.cellSize.x; // Grid의 Cell Size 사용
-            levelData.gridOrigin = transform.position;
-        }
-        else
-        {
-            levelData.cellSize = 1f;
-            levelData.gridOrigin = Vector3.zero;
-        }
+        // 그리드 설정 - Grid 컴포넌트에서 직접 가져오기
+        levelData.cellSize = grid != null ? grid.cellSize.x : 1f;
+        levelData.gridOrigin = transform.position;
 
         // Tilemap에서 타일 정보 읽어오기
         ReadTilemapData(levelData);
@@ -1785,13 +3606,6 @@ public class LevelGenerator : MonoBehaviour
             transform.position = levelData.gridOrigin;
         }
 
-        // GridVisualizer 설정 업데이트
-        if (gridVisualizer != null)
-        {
-            // GridVisualizer의 설정을 LevelData에 맞춰 업데이트
-            // (GridVisualizer에 public property나 method 추가 필요)
-        }
-
         Debug.Log($"Level {levelData.levelNumber} 로드 완료: {levelData.levelName}");
     }
 }using UnityEngine;
@@ -1871,8 +3685,8 @@ public class GridVisualizer : MonoBehaviour
     {
         Vector3 localPos = worldPosition - gridOrigin;
         return new Vector3Int(
-            Mathf.RoundToInt(localPos.x / cellSize),
-            Mathf.RoundToInt(localPos.y / cellSize),
+            Mathf.FloorToInt(localPos.x / cellSize),  // RoundToInt → FloorToInt
+            Mathf.FloorToInt(localPos.y / cellSize),  // RoundToInt → FloorToInt
             0
         );
     }
@@ -2070,340 +3884,6 @@ public class GridVisualizer : MonoBehaviour
         Gizmos.DrawWireCube(worldPos, Vector3.one * cellSize * 0.8f);
 #endif
     }
-}using UnityEngine;
-using UnityEngine.InputSystem;
-
-/// <summary>
-/// 터치 입력을 처리하고 캐릭터 선택을 관리하는 시스템
-/// </summary>
-public class TouchInputManager : MonoBehaviour
-{
-    [Header("Input Settings")]
-    [SerializeField] private float touchRadius = 0.5f;
-    [SerializeField] private LayerMask touchLayerMask = -1;
-
-    [Header("Debug")]
-    [SerializeField] private bool showDebugInfo = true;
-    [SerializeField] private bool showTouchPosition = true;
-
-    // 입력 시스템
-    private PlayerInputActions inputActions;
-    private Camera mainCamera;
-
-    // 선택된 캐릭터
-    private CharacterController selectedCharacter;
-
-    // 참조
-    private LevelLoader levelLoader;
-    private GridVisualizer gridVisualizer;
-
-    void Awake()
-    {
-        // 컴포넌트 참조 설정
-        inputActions = new PlayerInputActions();
-        mainCamera = Camera.main;
-        levelLoader = FindFirstObjectByType<LevelLoader>();
-        gridVisualizer = FindFirstObjectByType<GridVisualizer>();
-
-        if (mainCamera == null)
-        {
-            Debug.LogError("Main Camera not found!");
-        }
-    }
-
-    void OnEnable()
-    {
-        inputActions.Enable();
-        inputActions.Player.TouchPress.performed += OnTouchPressed;
-        // 기존 Touch 이벤트들은 모두 제거
-    }
-
-    void OnDisable()
-    {
-        inputActions.Player.TouchPress.performed -= OnTouchPressed;
-        inputActions.Disable();
-        // 기존 Touch 이벤트들은 모두 제거
-    }
-    private void OnTouchPressed(InputAction.CallbackContext context)
-    {
-        Vector2 touchPosition = inputActions.Player.Touch.ReadValue<Vector2>();
-        ProcessTouch(touchPosition);
-    }
-    void OnDestroy()
-    {
-        inputActions?.Dispose();
-    }
-
-    /// <summary>
-    /// 터치 입력 처리
-    /// </summary>
-    private void ProcessTouch(Vector2 screenPosition)
-    {
-        if (mainCamera == null) return;
-
-        // 스크린 좌표를 월드 좌표로 변환
-        Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -mainCamera.transform.position.z));
-        worldPosition.z = 0; // 2D 게임이므로 Z는 0
-
-        if (showTouchPosition)
-        {
-            Debug.Log($"Touch at screen: {screenPosition}, world: {worldPosition}");
-        }
-
-        // 그리드 좌표로 변환 - 간단하고 정확한 방식
-        Vector3Int gridPosition = Vector3Int.zero;
-        if (gridVisualizer != null)
-        {
-            // 직접 계산 (GridVisualizer 사용하지 않고)
-            gridPosition = new Vector3Int(
-                Mathf.FloorToInt(worldPosition.x),
-                Mathf.FloorToInt(worldPosition.y),
-                0
-            );
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"World: {worldPosition} → Grid: {gridPosition}");
-            }
-        }
-
-        // 터치한 위치에서 캐릭터 찾기
-        CharacterController touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
-
-        if (touchedCharacter != null)
-        {
-            SelectCharacter(touchedCharacter);
-        }
-        else
-        {
-            // 캐릭터가 선택된 상태에서 빈 공간을 터치한 경우
-            if (selectedCharacter != null)
-            {
-                // 경로 선택 처리
-                PathSelectionManager pathManager = GetComponent<PathSelectionManager>();
-                if (pathManager != null && pathManager.IsSelectingPath())
-                {
-                    pathManager.SelectPosition(gridPosition);
-                }
-            }
-            else
-            {
-                if (showDebugInfo)
-                {
-                    Debug.Log("No character found at touch position");
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// 특정 위치에서 캐릭터 찾기
-    /// </summary>
-    private CharacterController FindCharacterAtPosition(Vector3 worldPosition, Vector3Int gridPosition)
-    {
-        if (levelLoader == null) return null;
-
-        // 방법 1: 그리드 좌표로 정확히 찾기
-        CharacterController characterAtGrid = levelLoader.GetCharacterAt(gridPosition);
-        if (characterAtGrid != null)
-        {
-            return characterAtGrid;
-        }
-
-        // 방법 2: 터치 반경 내에서 찾기 (더 관대한 터치)
-        var allCharacters = levelLoader.GetSpawnedCharacters();
-        foreach (var character in allCharacters)
-        {
-            float distance = Vector3.Distance(worldPosition, character.transform.position);
-            if (distance <= touchRadius)
-            {
-                return character;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// 캐릭터 선택 처리
-    /// </summary>
-    private void SelectCharacter(CharacterController character)
-    {
-        // 이미 선택된 캐릭터와 같다면 선택 해제
-        if (selectedCharacter == character)
-        {
-            DeselectCharacter();
-            return;
-        }
-
-        // 기존 선택 해제
-        if (selectedCharacter != null)
-        {
-            selectedCharacter.SetSelected(false);
-        }
-
-        // 새 캐릭터 선택
-        selectedCharacter = character;
-        selectedCharacter.SetSelected(true);
-
-        if (showDebugInfo)
-        {
-            Debug.Log($"Character {selectedCharacter.GetCharacterId()} selected");
-            selectedCharacter.LogCharacterInfo();
-        }
-
-        // 선택된 캐릭터의 가능한 이동 경로 표시 (나중에 구현)
-        ShowAvailablePaths();
-        HighlightAssignedGoal();
-    }
-
-    /// <summary>
-    /// 캐릭터 선택 해제
-    /// </summary>
-    private void DeselectCharacter()
-    {
-        if (selectedCharacter != null)
-        {
-            selectedCharacter.SetSelected(false);
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"Character {selectedCharacter.GetCharacterId()} deselected");
-            }
-
-            selectedCharacter = null;
-        }
-
-        // 경로 표시 숨기기 (나중에 구현)
-        HideAvailablePaths();
-        ClearGoalHighlight();
-    }
-    /// <summary>
-    /// 모든 Goal 하이라이트 해제
-    /// </summary>
-    private void ClearGoalHighlight()
-    {
-        if (levelLoader == null) return;
-
-        var allGoals = levelLoader.GetSpawnedGoals();
-        foreach (var goal in allGoals)
-        {
-            goal.transform.localScale = Vector3.one;
-        }
-    }
-    /// <summary>
-    /// 선택된 캐릭터의 가능한 이동 경로 표시
-    /// </summary>
-    private void ShowAvailablePaths()
-    {
-        if (selectedCharacter == null) return;
-
-        // PathSelectionManager에게 경로 선택 시작 요청
-        PathSelectionManager pathManager = GetComponent<PathSelectionManager>();
-        if (pathManager != null)
-        {
-            pathManager.StartPathSelection(selectedCharacter);
-        }
-
-        if (showDebugInfo)
-        {
-            Debug.Log($"Started path selection for {selectedCharacter.GetCharacterId()}");
-            Debug.Log($"Remaining selections: {selectedCharacter.GetRemainingSelections()}");
-        }
-    }
-
-    /// <summary>
-    /// 경로 표시 숨기기 
-    /// </summary>
-    private void HideAvailablePaths()
-    {
-        // PathSelectionManager에게 경로 선택 종료 요청
-        PathSelectionManager pathManager = GetComponent<PathSelectionManager>();
-        if (pathManager != null)
-        {
-            pathManager.EndPathSelection();
-        }
-
-        if (showDebugInfo)
-        {
-            Debug.Log("Ended path selection");
-        }
-    }
-
-    /// <summary>
-    /// 현재 선택된 캐릭터 반환
-    /// </summary>
-    public CharacterController GetSelectedCharacter()
-    {
-        return selectedCharacter;
-    }
-
-    /// <summary>
-    /// 선택된 캐릭터의 목표 Goal 강조
-    /// </summary>
-    private void HighlightAssignedGoal()
-    {
-        if (selectedCharacter == null || levelLoader == null) return;
-
-        // 모든 Goal 하이라이트 해제
-        var allGoals = levelLoader.GetSpawnedGoals();
-        foreach (var goal in allGoals)
-        {
-            goal.transform.localScale = Vector3.one;
-        }
-
-        // 선택된 캐릭터가 사용할 수 있는 Goal들 하이라이트
-        foreach (var goal in allGoals)
-        {
-            if (goal.CanUseGoal(selectedCharacter.GetCharacterId()))
-            {
-                goal.transform.localScale = Vector3.one * 1.2f;
-            }
-        }
-    }
-    /// <summary>
-    /// 특정 캐릭터 강제 선택
-    /// </summary>
-    public void ForceSelectCharacter(CharacterController character)
-    {
-        if (character != null)
-        {
-            SelectCharacter(character);
-        }
-    }
-
-    /// <summary>
-    /// 모든 선택 해제
-    /// </summary>
-    public void ClearSelection()
-    {
-        DeselectCharacter();
-    }
-
-#if UNITY_EDITOR
-    void OnDrawGizmos()
-    {
-        if (showTouchPosition && mainCamera != null)
-        {
-            // 터치 반경 표시
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, touchRadius);
-        }
-    }
-
-    [ContextMenu("Test Character Selection")]
-    public void TestCharacterSelection()
-    {
-        if (levelLoader != null)
-        {
-            var characters = levelLoader.GetSpawnedCharacters();
-            if (characters.Count > 0)
-            {
-                SelectCharacter(characters[0]);
-            }
-        }
-    }
-#endif
 }using UnityEngine;
 using UnityEngine.UI;
 
