@@ -145,9 +145,23 @@ public class LevelGenerator : MonoBehaviour
 
     private void ReadTilemapData(LevelData levelData)
     {
-        // Tilemap의 사용된 영역 가져오기
+        Debug.Log("=== Reading Tilemap Data ===");
+
+        // 기존 타일 데이터 클리어
+        levelData.walkableTiles.Clear();
+        levelData.tileTypes.Clear();
+
         BoundsInt bounds = tilemap.cellBounds;
         TileBase[] tiles = tilemap.GetTilesBlock(bounds);
+
+        // 타일 타입 매핑 생성
+        Dictionary<TileBase, int> tileToTypeId = new Dictionary<TileBase, int>();
+        int nextTypeId = 0;
+
+        Debug.Log($"Scanning tilemap bounds: {bounds}");
+        Debug.Log($"Total tile slots: {tiles.Length}");
+
+        int processedTiles = 0;
 
         for (int x = 0; x < bounds.size.x; x++)
         {
@@ -162,9 +176,51 @@ public class LevelGenerator : MonoBehaviour
                         0
                     );
 
-                    levelData.AddTile(position, true);
+                    // 새로운 타일 타입이면 등록
+                    if (!tileToTypeId.ContainsKey(tile))
+                    {
+                        tileToTypeId[tile] = nextTypeId;
+
+                        // 타일 에셋 경로 가져오기
+                        string assetPath = "";
+#if UNITY_EDITOR
+                        assetPath = UnityEditor.AssetDatabase.GetAssetPath(tile);
+#endif
+
+                        levelData.AddTileType(
+                            nextTypeId,
+                            tile.name,
+                            assetPath,
+                            true  // 기본적으로 모든 타일은 이동 가능
+                        );
+
+                        Debug.Log($"New tile type registered: ID={nextTypeId}, Name={tile.name}, Path={assetPath}");
+                        nextTypeId++;
+                    }
+
+                    // 타일 데이터 저장
+                    levelData.AddTile(
+                        position,
+                        true,
+                        tile.name,
+                        tileToTypeId[tile]
+                    );
+
+                    processedTiles++;
                 }
             }
+        }
+
+        Debug.Log($"=== Tilemap Reading Complete ===");
+        Debug.Log($"Processed tiles: {processedTiles}");
+        Debug.Log($"Unique tile types: {levelData.tileTypes.Count}");
+        Debug.Log($"Total saved tiles: {levelData.walkableTiles.Count}");
+
+        // 타일 타입 정보 출력
+        foreach (var tileType in levelData.tileTypes)
+        {
+            int count = levelData.walkableTiles.FindAll(t => t.tileTypeId == tileType.typeId).Count;
+            Debug.Log($"  - {tileType.typeName} (ID: {tileType.typeId}): {count} tiles");
         }
     }
 

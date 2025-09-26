@@ -13,6 +13,7 @@ public class GamePiece : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private Vector3Int currentGridPosition;
+    [SerializeField] private Vector3Int startGridPosition; // 시작 위치 저장
 
     [Header("Visual")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -20,6 +21,9 @@ public class GamePiece : MonoBehaviour
 
     [Header("Completion State")]
     [SerializeField] private bool isCompleted = false;
+
+  
+
     // 상태 관리
     private bool isMoving = false;
     private int remainingSelections;
@@ -52,6 +56,7 @@ public class GamePiece : MonoBehaviour
     {
         characterId = id;
         currentGridPosition = startPos;
+        startGridPosition = startPos; // 시작 위치 저장
         maxSelections = maxSel;
         remainingSelections = maxSel;
         characterColor = color;
@@ -60,6 +65,7 @@ public class GamePiece : MonoBehaviour
         SetupCharacter();
         UpdateVisual();
     }
+
     /// <summary>
     /// 경로 완성 상태 설정
     /// </summary>
@@ -76,7 +82,21 @@ public class GamePiece : MonoBehaviour
     {
         return isCompleted;
     }
+    /// <summary>
+    /// 시작 위치 반환
+    /// </summary>
+    public Vector3Int GetStartGridPosition()
+    {
+        return startGridPosition;
+    }
 
+    /// <summary>
+    /// 현재 위치 업데이트 (이동 완료 시 호출)
+    /// </summary>
+    public void UpdateGridPosition(Vector3Int newPosition)
+    {
+        currentGridPosition = newPosition;
+    }
     /// <summary>
     /// 캐릭터 기본 설정 적용
     /// </summary>

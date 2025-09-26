@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// 캐릭터 데이터를 저장하는 구조체
@@ -57,15 +58,42 @@ public struct GoalData
 /// <summary>
 /// 타일 데이터를 저장하는 구조체 (필요 시 확장 가능)
 /// </summary>
+/// <summary>
+/// 타일 데이터를 저장하는 구조체
+/// </summary>
 [System.Serializable]
 public struct TileData
 {
     public Vector3Int position;         // 타일 위치
     public bool isWalkable;            // 이동 가능 여부
+    public string tileName;            // 타일 이름
+    public int tileTypeId;             // 타일 타입 ID
 
-    public TileData(Vector3Int pos, bool walkable = true)
+    public TileData(Vector3Int pos, bool walkable = true, string name = "", int typeId = 0)
     {
         position = pos;
+        isWalkable = walkable;
+        tileName = name;
+        tileTypeId = typeId;
+    }
+}
+
+/// <summary>
+/// 타일 타입 정보를 저장하는 구조체
+/// </summary>
+[System.Serializable]
+public struct TileTypeData
+{
+    public int typeId;
+    public string typeName;
+    public string tileAssetPath;       // 타일 에셋 경로
+    public bool isWalkable;
+
+    public TileTypeData(int id, string name, string assetPath, bool walkable = true)
+    {
+        typeId = id;
+        typeName = name;
+        tileAssetPath = assetPath;
         isWalkable = walkable;
     }
 }
@@ -80,6 +108,12 @@ public class LevelData : ScriptableObject
     public int levelNumber;
     public string levelName;
 
+    [Header("Tile Mapping")]
+    public List<TileTypeData> tileTypes = new List<TileTypeData>();  // 사용된 타일 타입들
+
+    [Header("Tiles")]
+    public List<TileData> walkableTiles = new List<TileData>();     // 실제 배치된 타일들
+
     [Header("Grid Settings")]
     public int gridWidth = 10;
     public int gridHeight = 10;
@@ -91,10 +125,7 @@ public class LevelData : ScriptableObject
 
     [Header("Goals")]
     public List<GoalData> goals = new List<GoalData>();
-
-    [Header("Tiles")]
-    public List<TileData> walkableTiles = new List<TileData>();
-
+    
     [Header("Level Settings")]
     public float moveSpeed = 2f;        // 캐릭터 이동 속도
     public bool showGridInGame = false; // 게임 중 그리드 표시 여부
@@ -110,6 +141,10 @@ public class LevelData : ScriptableObject
     /// <summary>
     /// 특정 위치에 캐릭터가 있는지 확인
     /// </summary>
+    /// 
+
+
+
     public CharacterData? GetCharacterAt(Vector3Int position)
     {
         for (int i = 0; i < characters.Count; i++)
@@ -247,4 +282,53 @@ public class LevelData : ScriptableObject
             Debug.Log($"Goal {i}: Pos({goals[i].position}), Type({goals[i].goalType})");
         }
     }
+    
+    /// <summary>
+     /// 타일 타입 ID로 실제 TileBase 에셋 로드
+     /// </summary>
+    public TileBase GetTileAsset(int tileTypeId)
+    {
+#if UNITY_EDITOR
+        var tileType = tileTypes.Find(t => t.typeId == tileTypeId);
+        if (!string.IsNullOrEmpty(tileType.tileAssetPath))
+        {
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>(tileType.tileAssetPath);
+        }
+#endif
+        return null;
+    }
+
+    /// <summary>
+    /// 타일 타입 추가
+    /// </summary>
+    public void AddTileType(int typeId, string typeName, string assetPath, bool isWalkable = true)
+    {
+        // 중복 체크
+        if (!tileTypes.Exists(t => t.typeId == typeId))
+        {
+            tileTypes.Add(new TileTypeData(typeId, typeName, assetPath, isWalkable));
+        }
+    }
+
+    /// <summary>
+    /// 타일 추가 (오버로드)
+    /// </summary>
+    public void AddTile(Vector3Int position, bool isWalkable, string tileName, int tileTypeId)
+    {
+        // 중복 체크
+        if (!walkableTiles.Exists(tile => tile.position == position))
+        {
+            walkableTiles.Add(new TileData(position, isWalkable, tileName, tileTypeId));
+        }
+    }
+
+    /// <summary>
+    /// 특정 타입ID의 타일 타입 정보 반환
+    /// </summary>
+    public TileTypeData? GetTileType(int typeId)
+    {
+        var tileType = tileTypes.Find(t => t.typeId == typeId);
+        return tileType.typeId == typeId ? tileType : (TileTypeData?)null;
+    }
+
 }

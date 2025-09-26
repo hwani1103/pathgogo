@@ -64,18 +64,22 @@
     <Compile Include="Assets\Scripts\Core\GoalController.cs" />
     <Compile Include="Assets\Scripts\Managers\TouchInputManager.cs" />
     <Compile Include="Assets\Scripts\Level\LevelGenerator.cs" />
+    <Compile Include="Assets\Scripts\Core\CollisionPredictor.cs" />
     <Compile Include="Assets\Scripts\Core\GamePiece.cs" />
     <Compile Include="Assets\Scripts\Managers\CharacterUIManager.cs" />
+    <Compile Include="Assets\Scripts\Managers\MovementGameManager.cs" />
     <Compile Include="Assets\Scripts\Level\LevelData.cs" />
     <Compile Include="Assets\Scripts\Core\GoalType.cs" />
     <Compile Include="Assets\Scripts\Core\MovementSimulator.cs" />
     <Compile Include="Assets\Scripts\UI\SafeArea.cs" />
     <Compile Include="Assets\Scripts\Core\CollisionDetector.cs" />
     <Compile Include="Assets\Scripts\UI\GridVisualizer.cs" />
+    <Compile Include="Assets\Scripts\UI\TestUIManager.cs" />
     <Compile Include="Assets\PlayerInputActions.cs" />
     <Compile Include="Assets\TooCubeForest\demoScenes\Movement.cs" />
     <Compile Include="Assets\Scripts\Managers\PathSelectionManager.cs" />
     <Compile Include="Assets\Scripts\Core\PathValidator.cs" />
+    <Compile Include="Assets\Scripts\Core\CharacterMover.cs" />
     <Compile Include="Assets\Scripts\Managers\LevelLoader.cs" />
   </ItemGroup>
   <ItemGroup>

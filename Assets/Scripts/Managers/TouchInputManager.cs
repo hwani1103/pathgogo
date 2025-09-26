@@ -75,7 +75,11 @@ public class TouchInputManager : MonoBehaviour
     /// </summary>
     private void ProcessTouch(Vector2 screenPosition)
     {
-        if (mainCamera == null || gridVisualizer == null) return;
+        if (mainCamera == null || gridVisualizer == null)
+        {
+            Debug.LogError("Required components not found!");
+            return;
+        }
 
         Vector3 worldPosition = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -mainCamera.transform.position.z));
         worldPosition.z = 0;
