@@ -12,13 +12,20 @@ public class CharacterMover : MonoBehaviour
     private List<Vector3Int> currentPath;
     private Coroutine movementCoroutine;
 
+    // 캐시된 참조들
     private GridVisualizer gridVisualizer;
     private GamePiece gamePiece;
+    private MovementGameManager cachedGameManager;
+    private LevelLoader cachedLevelLoader;
 
     void Awake()
     {
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
         gamePiece = GetComponent<GamePiece>();
+
+        // 캐시 초기화
+        cachedGameManager = FindFirstObjectByType<MovementGameManager>();
+        cachedLevelLoader = FindFirstObjectByType<LevelLoader>();
     }
 
     public void StartMovement(List<Vector3Int> path)
@@ -46,7 +53,6 @@ public class CharacterMover : MonoBehaviour
     {
         if (currentPath == null || currentPath.Count < 2)
         {
-            Debug.LogWarning($"Invalid path for character {gamePiece.GetCharacterId()}");
             yield break;
         }
 
@@ -77,16 +83,57 @@ public class CharacterMover : MonoBehaviour
         {
             elapsedTime += Time.deltaTime;
             float progress = elapsedTime / duration;
-
             float curveProgress = movementCurve.Evaluate(progress);
 
             Vector3 currentPosition = Vector3.Lerp(fromWorld, toWorld, curveProgress);
             transform.position = currentPosition;
 
+            // 매 프레임 충돌 체크 (수동 감지)
+            CheckCollisionWithOtherCharacters();
+
             yield return null;
         }
 
         transform.position = toWorld;
+    }
+
+    /// <summary>
+    /// 수동 충돌 감지 시스템
+    /// </summary>
+    private void CheckCollisionWithOtherCharacters()
+    {
+        if (cachedGameManager == null || !cachedGameManager.IsGameInProgress())
+            return;
+
+        if (cachedLevelLoader == null || gamePiece == null)
+            return;
+
+        var myPos = transform.position;
+        var allCharacters = cachedLevelLoader.GetSpawnedCharacters();
+
+        foreach (var otherCharacter in allCharacters)
+        {
+            if (otherCharacter == gamePiece) continue;
+
+            // 상대방도 움직이고 있는지 확인
+            var otherMover = otherCharacter.GetComponent<CharacterMover>();
+            if (otherMover == null || !otherMover.IsMoving()) continue;
+
+            var otherPos = otherCharacter.transform.position;
+            float distance = Vector3.Distance(myPos, otherPos);
+
+            // 충돌 임계값 체크
+            if (distance < 0.4f)
+            {
+                Vector3 collisionPoint = (myPos + otherPos) * 0.5f;
+                cachedGameManager.OnCharacterCollision(
+                    gamePiece.GetCharacterId(),
+                    otherCharacter.GetCharacterId(),
+                    collisionPoint
+                );
+                return;
+            }
+        }
     }
 
     public Vector3Int GetPositionAtTime(float targetTime)
@@ -141,8 +188,6 @@ public class CharacterMover : MonoBehaviour
 
     private void OnMovementComplete()
     {
-        Debug.Log($"Character {gamePiece.GetCharacterId()} completed movement");
-
         Vector3Int finalPosition = currentPath[currentPath.Count - 1];
     }
 

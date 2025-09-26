@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 캐릭터 이동과 충돌을 통합 관리하는 게임 매니저
-/// Unity 물리 충돌 시스템만 사용
+/// 캐릭터 이동과 게임 상태를 통합 관리하는 게임 매니저
+/// 수동 충돌 감지 시스템 사용
 /// </summary>
 public class MovementGameManager : MonoBehaviour
 {
@@ -19,9 +19,10 @@ public class MovementGameManager : MonoBehaviour
 
     // 캐릭터 이동 관리
     private Dictionary<string, CharacterMover> characterMovers;
-    private Dictionary<string, CharacterCollisionDetector> collisionDetectors;
-
     private GridVisualizer gridVisualizer;
+
+    // Race condition 방지
+    private bool collisionProcessing = false;
 
     void Awake()
     {
@@ -33,15 +34,12 @@ public class MovementGameManager : MonoBehaviour
             testUIManager = FindFirstObjectByType<TestUIManager>();
 
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
-
         characterMovers = new Dictionary<string, CharacterMover>();
-        collisionDetectors = new Dictionary<string, CharacterCollisionDetector>();
     }
 
     void Start()
     {
         InitializeCharacterMovers();
-        SetupCollisionDetection();
     }
 
     public bool IsGameInProgress()
@@ -60,7 +58,7 @@ public class MovementGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 모든 캐릭터에 CharacterMover 및 물리 컴포넌트 추가
+    /// 모든 캐릭터에 CharacterMover 추가 (물리 컴포넌트 제거)
     /// </summary>
     private void InitializeCharacterMovers()
     {
@@ -78,54 +76,14 @@ public class MovementGameManager : MonoBehaviour
             }
             characterMovers[character.GetCharacterId()] = mover;
 
-            // 물리 충돌용 Collider 추가
+            // 물리 컴포넌트 완전 제거
             var collider = character.GetComponent<CircleCollider2D>();
-            if (collider == null)
-            {
-                collider = character.gameObject.AddComponent<CircleCollider2D>();
-                collider.radius = 0.35f; // 타일 크기의 70% 정도
-                collider.isTrigger = true;
-            }
+            if (collider != null)
+                DestroyImmediate(collider);
 
-            // Rigidbody2D 추가
             var rigidbody = character.GetComponent<Rigidbody2D>();
-            if (rigidbody == null)
-            {
-                rigidbody = character.gameObject.AddComponent<Rigidbody2D>();
-                rigidbody.gravityScale = 0;
-                rigidbody.freezeRotation = true;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 물리 기반 충돌 감지 시스템 설정
-    /// </summary>
-    private void SetupCollisionDetection()
-    {
-        var characters = levelLoader.GetSpawnedCharacters();
-
-        foreach (var character in characters)
-        {
-            var detector = character.GetComponent<CharacterCollisionDetector>();
-            if (detector == null)
-            {
-                detector = character.gameObject.AddComponent<CharacterCollisionDetector>();
-            }
-
-            detector.Initialize(this, character.GetCharacterId());
-            collisionDetectors[character.GetCharacterId()] = detector;
-        }
-    }
-
-    /// <summary>
-    /// 충돌 감지 활성화/비활성화
-    /// </summary>
-    private void SetCollisionDetectionEnabled(bool enabled)
-    {
-        foreach (var detector in collisionDetectors.Values)
-        {
-            detector.SetCollisionEnabled(enabled);
+            if (rigidbody != null)
+                DestroyImmediate(rigidbody);
         }
     }
 
@@ -172,10 +130,13 @@ public class MovementGameManager : MonoBehaviour
             yield break;
         }
 
-        // 충돌 감지 활성화
-        SetCollisionDetectionEnabled(true);
-
         yield return new WaitForSeconds(1f);
+
+        // 게임이 중단되었는지 체크
+        if (!gameInProgress)
+        {
+            yield break;
+        }
 
         // 모든 캐릭터 이동 시작
         StartAllCharacterMovement(characterPaths);
@@ -183,8 +144,11 @@ public class MovementGameManager : MonoBehaviour
         // 모든 캐릭터 이동 완료까지 대기
         yield return StartCoroutine(WaitForAllMovementComplete());
 
-        // 게임 종료 처리
-        OnGameComplete();
+        // 게임이 여전히 진행 중인 경우만 완료 처리
+        if (gameInProgress && !movementStarted)
+        {
+            OnGameComplete();
+        }
     }
 
     private Dictionary<string, List<Vector3Int>> CollectAllCharacterPaths()
@@ -225,14 +189,24 @@ public class MovementGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 물리 충돌 이벤트 처리 (CharacterCollisionDetector에서 호출)
+    /// 수동 충돌 이벤트 처리 (CharacterMover에서 호출)
+    /// Race condition 방지 로직 포함
     /// </summary>
     public void OnCharacterCollision(string characterId1, string characterId2, Vector3 collisionPoint)
     {
+        // 이미 충돌 처리 중이면 무시
+        if (collisionProcessing)
+        {
+            return;
+        }
+
         if (!gameInProgress || !movementStarted)
         {
             return;
         }
+
+        // 충돌 처리 시작 플래그
+        collisionProcessing = true;
 
         // 이동 중인 캐릭터들만 충돌로 간주
         bool char1Moving = characterMovers.ContainsKey(characterId1) && characterMovers[characterId1].IsMoving();
@@ -240,6 +214,7 @@ public class MovementGameManager : MonoBehaviour
 
         if (!char1Moving || !char2Moving)
         {
+            collisionProcessing = false;
             return;
         }
 
@@ -247,6 +222,7 @@ public class MovementGameManager : MonoBehaviour
         Vector3Int gridPos = gridVisualizer.WorldToGridPosition(collisionPoint);
         if (IsGoalPosition(gridPos))
         {
+            collisionProcessing = false;
             return;
         }
 
@@ -272,21 +248,11 @@ public class MovementGameManager : MonoBehaviour
         foreach (var mover in characterMovers.Values)
         {
             mover.StopAllCoroutines();
-
-            var rb = mover.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-            }
         }
 
-        // 충돌 감지 비활성화
-        SetCollisionDetectionEnabled(false);
-
-        // 게임 상태 변경
-        gameInProgress = false;
+        // 게임 상태 변경 (순서 중요)
         movementStarted = false;
+        gameInProgress = false;
     }
 
     private bool IsGoalPosition(Vector3Int position)
@@ -331,14 +297,9 @@ public class MovementGameManager : MonoBehaviour
 
     private void OnGameComplete()
     {
-        if (!gameInProgress && !movementStarted)
-        {
-            return;
-        }
-        SetCollisionDetectionEnabled(false);
         gameInProgress = false;
 
-        // LevelLoader에 레벨 클리어 알림
+        // movementStarted 조건 제거
         var levelLoader = FindFirstObjectByType<LevelLoader>();
         if (levelLoader != null)
         {
@@ -346,33 +307,25 @@ public class MovementGameManager : MonoBehaviour
         }
         else
         {
-            ShowGameClearUI(); // 기존 메서드 유지
+            ShowGameClearUI();
         }
     }
+
     /// <summary>
     /// 레벨 변경 시 호출 - 모든 참조 정리
     /// </summary>
     public void OnLevelChanged()
     {
-        // 진행 중인 게임 강제 중단
         StopAllCoroutines();
 
-        // 게임 상태 리셋
         gameInProgress = false;
         movementStarted = false;
+        collisionProcessing = false;
 
-        // CharacterMover 참조 정리
         if (characterMovers != null)
         {
             characterMovers.Clear();
         }
-
-        if (collisionDetectors != null)
-        {
-            collisionDetectors.Clear();
-        }
-
-        Debug.Log("MovementGameManager cleaned up for level change");
     }
 
     /// <summary>
@@ -380,17 +333,13 @@ public class MovementGameManager : MonoBehaviour
     /// </summary>
     public void InitializeForNewLevel()
     {
-        // 새로운 캐릭터들에 대해 CharacterMover 설정
         InitializeCharacterMovers();
-        SetupCollisionDetection();
-
-        Debug.Log("MovementGameManager initialized for new level");
     }
+
     private void ShowGameOverUI(CollisionPredictor.CollisionEvent collision)
     {
         string message = $"Characters {string.Join(", ", collision.characterIds)} collided at {collision.position}";
 
-        // LevelLoader에 게임 오버 알림
         var levelLoader = FindFirstObjectByType<LevelLoader>();
         if (levelLoader != null)
         {
@@ -406,7 +355,7 @@ public class MovementGameManager : MonoBehaviour
     {
         if (testUIManager != null)
         {
-            testUIManager.ShowLevelClearedUI(); // 메서드명 변경
+            testUIManager.ShowLevelClearedUI();
         }
     }
 
@@ -417,9 +366,9 @@ public class MovementGameManager : MonoBehaviour
             mover.StopAllCoroutines();
         }
 
-        SetCollisionDetectionEnabled(false);
         gameInProgress = false;
         movementStarted = false;
+        collisionProcessing = false;
 
         ResetCharacterPositions();
     }
@@ -467,50 +416,5 @@ public class MovementGameManager : MonoBehaviour
         }
 
         return character.GetCurrentGridPosition();
-    }
-}
-
-/// <summary>
-/// 각 캐릭터에 부착되어 물리 충돌을 감지하는 컴포넌트
-/// </summary>
-public class CharacterCollisionDetector : MonoBehaviour
-{
-    private MovementGameManager gameManager;
-    private string characterId;
-    private bool collisionEnabled = false;
-    private HashSet<string> collidedWith = new HashSet<string>();
-
-    public void Initialize(MovementGameManager manager, string id)
-    {
-        gameManager = manager;
-        characterId = id;
-    }
-
-    public void SetCollisionEnabled(bool enabled)
-    {
-        collisionEnabled = enabled;
-        if (!enabled)
-        {
-            collidedWith.Clear();
-        }
-    }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!collisionEnabled) return;
-
-        var otherCharacter = other.GetComponent<GamePiece>();
-        if (otherCharacter != null && gameManager != null)
-        {
-            string otherCharacterId = otherCharacter.GetCharacterId();
-
-            if (otherCharacterId == characterId) return;
-
-            if (collidedWith.Contains(otherCharacterId)) return;
-            collidedWith.Add(otherCharacterId);
-
-            Vector3 collisionPoint = (transform.position + other.transform.position) * 0.5f;
-            gameManager.OnCharacterCollision(characterId, otherCharacterId, collisionPoint);
-        }
     }
 }

@@ -88,8 +88,8 @@ public class TouchInputManager : MonoBehaviour
         GamePiece touchedCharacter = FindCharacterAtPosition(worldPosition, gridPosition);
 
 
-        if(touchedCharacter != null)
-{
+        if (touchedCharacter != null)
+        {
             if (selectedCharacter == touchedCharacter)
             {
                 DeselectCharacter();

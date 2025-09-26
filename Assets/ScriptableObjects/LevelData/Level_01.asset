@@ -13,372 +13,372 @@ MonoBehaviour:
   m_Name: Level_01
   m_EditorClassIdentifier: 
   levelNumber: 1
-  levelName: Level 1
+  levelName: Level1
   tileTypes:
   - typeId: 0
-    typeName: Forest_terrain_gray_128px_2
-    tileAssetPath: Assets/TooCubeForest/images/Forest_terrain_gray_128px_2.asset
+    typeName: Forest_terrain_blue_128px_3
+    tileAssetPath: Assets/TooCubeForest/images/Forest_terrain_blue_128px_3.asset
     isWalkable: 1
   walkableTiles:
-  - position: {x: 0, y: 10, z: 0}
+  - position: {x: 0, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 0, y: 11, z: 0}
+  - position: {x: 0, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 0, y: 12, z: 0}
+  - position: {x: 0, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 0, y: 13, z: 0}
+  - position: {x: 0, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 0, y: 14, z: 0}
+  - position: {x: 0, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 1, y: 10, z: 0}
+  - position: {x: 1, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 1, y: 11, z: 0}
+  - position: {x: 1, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 1, y: 12, z: 0}
+  - position: {x: 1, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 1, y: 13, z: 0}
+  - position: {x: 1, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 1, y: 14, z: 0}
+  - position: {x: 1, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 2, y: 10, z: 0}
+  - position: {x: 2, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 2, y: 11, z: 0}
+  - position: {x: 2, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 2, y: 12, z: 0}
+  - position: {x: 2, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 2, y: 13, z: 0}
+  - position: {x: 2, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
-  - position: {x: 2, y: 14, z: 0}
+  - position: {x: 2, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 0, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 1, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 2, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 3, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 4, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 5, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 6, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 7, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 8, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 3, y: 9, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 3, y: 10, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 3, y: 11, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 3, y: 12, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 3, y: 13, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 3, y: 14, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 0, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 1, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 2, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 3, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 4, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 5, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 6, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 7, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 8, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 4, y: 9, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 4, y: 10, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 4, y: 11, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 4, y: 12, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 4, y: 13, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 4, y: 14, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 0, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 1, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 2, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 3, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 4, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 5, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 6, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 7, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 8, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
+    tileTypeId: 0
+  - position: {x: 5, y: 9, z: 0}
+    isWalkable: 1
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 5, y: 10, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 5, y: 11, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 5, y: 12, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 5, y: 13, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 5, y: 14, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 0, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 1, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 2, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 3, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 4, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 10, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 11, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 12, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 13, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 6, y: 14, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 0, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 1, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 2, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 3, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 4, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 7, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 7, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 7, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 7, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 7, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 10, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 11, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 12, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 13, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 7, y: 14, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 0, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 1, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 2, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 3, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 4, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 8, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 8, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 8, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 8, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 8, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 10, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 11, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 12, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 13, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 8, y: 14, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 0, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 1, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 2, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 3, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 4, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 9, y: 5, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 9, y: 6, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 9, y: 7, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 9, y: 8, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   - position: {x: 9, y: 9, z: 0}
     isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 10, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 11, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 12, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 13, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
-    tileTypeId: 0
-  - position: {x: 9, y: 14, z: 0}
-    isWalkable: 1
-    tileName: Forest_terrain_gray_128px_2
+    tileName: Forest_terrain_blue_128px_3
     tileTypeId: 0
   gridWidth: 10
   gridHeight: 15
@@ -386,23 +386,33 @@ MonoBehaviour:
   gridOrigin: {x: 0, y: 0, z: 0}
   characters:
   - characterId: A
-    startPosition: {x: 0, y: 14, z: 0}
+    startPosition: {x: 3, y: 14, z: 0}
     maxSelections: 5
     characterColor: {r: 1, g: 0, b: 0, a: 1}
     assignedGoalIndex: 0
   - characterId: B
-    startPosition: {x: 0, y: 10, z: 0}
+    startPosition: {x: 9, y: 5, z: 0}
     maxSelections: 5
     characterColor: {r: 0, g: 1, b: 0.8869717, a: 1}
     assignedGoalIndex: 0
+  - characterId: C
+    startPosition: {x: 6, y: 0, z: 0}
+    maxSelections: 5
+    characterColor: {r: 0, g: 0, b: 0, a: 1}
+    assignedGoalIndex: 1
+  - characterId: D
+    startPosition: {x: 0, y: 5, z: 0}
+    maxSelections: 5
+    characterColor: {r: 1, g: 0, b: 0.72107124, a: 1}
+    assignedGoalIndex: 1
   goals:
-  - position: {x: 7, y: 2, z: 0}
+  - position: {x: 5, y: 7, z: 0}
     goalType: 0
     assignedCharacters: []
-    goalColor: {r: 0.098296165, g: 0, b: 1, a: 1}
-  - position: {x: 9, y: 4, z: 0}
+    goalColor: {r: 0.098296165, g: 0, b: 1, a: 0}
+  - position: {x: 5, y: 0, z: 0}
     goalType: 0
     assignedCharacters: []
-    goalColor: {r: 1, g: 0, b: 0.5486493, a: 1}
+    goalColor: {r: 1, g: 0, b: 0.5486493, a: 0}
   moveSpeed: 2
   showGridInGame: 0
