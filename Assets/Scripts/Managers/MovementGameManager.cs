@@ -339,7 +339,11 @@ public class MovementGameManager : MonoBehaviour
     private void ShowGameOverUI(CollisionPredictor.CollisionEvent collision)
     {
         string message = $"Characters {string.Join(", ", collision.characterIds)} collided at {collision.position}";
-
+        //var autoTestManager = FindFirstObjectByType<AutoTestManager>();
+        //if (autoTestManager != null)
+        //{
+        //    autoTestManager.OnGameOverTriggered();
+        //}
         var levelLoader = FindFirstObjectByType<LevelLoader>();
         if (levelLoader != null)
         {

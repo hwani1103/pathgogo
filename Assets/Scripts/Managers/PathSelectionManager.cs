@@ -3,8 +3,6 @@ using UnityEngine;
 
 /// <summary>
 /// 캐릭터의 경로 선택을 관리하는 시스템
-/// PathValidator, CollisionDetector, MovementSimulator와 연동
-/// 완성된 경로를 저장하여 MovementGameManager에 전달
 /// </summary>
 public class PathSelectionManager : MonoBehaviour
 {
@@ -19,9 +17,6 @@ public class PathSelectionManager : MonoBehaviour
     [SerializeField] private GameObject flagPrefab;
     [SerializeField] private float flagScale = 0.5f;
 
-    [Header("Collision Feedback")]
-    //[SerializeField] private bool showCollisionWarnings = true;
-
     // 현재 선택된 캐릭터
     private GamePiece currentCharacter;
 
@@ -31,44 +26,28 @@ public class PathSelectionManager : MonoBehaviour
     private List<LineRenderer> availablePathLines = new List<LineRenderer>();
     private LineRenderer finalPathLine;
 
-    // 완성된 경로들을 저장하는 딕셔너리 (새로 추가)
+    // 완성된 경로들을 저장하는 딕셔너리
     private Dictionary<string, List<Vector3Int>> completedPaths = new Dictionary<string, List<Vector3Int>>();
 
     // 시스템 참조
     private PathValidator pathValidator;
-    private CollisionDetector collisionDetector;
-    private MovementSimulator movementSimulator;
     private GridVisualizer gridVisualizer;
     private LevelLoader levelLoader;
-    private TouchInputManager touchInputManager;
+
+    // 중복 입력 방지
+    private Vector3Int lastSelectedPosition = Vector3Int.zero;
+    private float lastSelectionTime = 0f;
 
     void Awake()
     {
-        // 기존 참조
         gridVisualizer = FindFirstObjectByType<GridVisualizer>();
         levelLoader = FindFirstObjectByType<LevelLoader>();
-        touchInputManager = FindFirstObjectByType<TouchInputManager>();
-
-        // 새 시스템 참조 (같은 GameObject에 있다고 가정)
         pathValidator = GetComponent<PathValidator>();
-        collisionDetector = GetComponent<CollisionDetector>();
-        movementSimulator = GetComponent<MovementSimulator>();
 
-        // 없으면 자동 생성
         if (pathValidator == null)
             pathValidator = gameObject.AddComponent<PathValidator>();
-        if (collisionDetector == null)
-            collisionDetector = gameObject.AddComponent<CollisionDetector>();
-        if (movementSimulator == null)
-            movementSimulator = gameObject.AddComponent<MovementSimulator>();
 
-        // 최종 경로 Line Renderer 생성
         CreateFinalPathLineRenderer();
-
-        if (gridVisualizer == null)
-            Debug.LogError("GridVisualizer not found!");
-        if (levelLoader == null)
-            Debug.LogError("LevelLoader not found!");
     }
 
     /// <summary>
@@ -80,11 +59,7 @@ public class PathSelectionManager : MonoBehaviour
 
         currentCharacter = character;
         currentPath.Clear();
-
-        // 캐릭터 시작 위치를 경로에 추가
         currentPath.Add(character.GetCurrentGridPosition());
-
-        // 가능한 경로들 표시
         ShowAvailablePaths();
     }
 
@@ -95,7 +70,6 @@ public class PathSelectionManager : MonoBehaviour
     {
         currentCharacter = null;
         currentPath.Clear();
-
         ClearAllVisuals();
     }
 
@@ -104,11 +78,25 @@ public class PathSelectionManager : MonoBehaviour
     /// </summary>
     public void SelectPosition(Vector3Int gridPosition)
     {
+        // 중복 호출 방지
+        if (gridPosition == lastSelectedPosition && Time.time - lastSelectionTime < 0.1f)
+            return;
+
+        lastSelectedPosition = gridPosition;
+        lastSelectionTime = Time.time;
+
         if (currentCharacter == null) return;
 
         Vector3Int currentPos = currentPath.Count > 0 ? currentPath[currentPath.Count - 1] : currentCharacter.GetCurrentGridPosition();
 
-        // 선택 가능한 위치인지 확인
+        // 마지막 선택된 위치만 Redo 가능
+        if (CanUndoAtPosition(gridPosition))
+        {
+            UndoLastSelection();
+            return;
+        }
+
+        // 새로운 위치 선택 검증
         if (!IsValidSelection(currentPos, gridPosition))
         {
             ShowInvalidSelectionFeedback(gridPosition);
@@ -117,23 +105,64 @@ public class PathSelectionManager : MonoBehaviour
 
         // 경로에 추가
         currentPath.Add(gridPosition);
-
-        // Flag 생성
         CreateFlag(gridPosition);
 
-        // 남은 선택 횟수 확인
+        // 완료 여부 확인
         int remainingSelections = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
-
         if (remainingSelections <= 0 || pathValidator.IsGoalPosition(gridPosition, currentCharacter))
         {
-            // 경로 완성
             CompletePath();
         }
         else
         {
-            // 다음 선택을 위한 가능한 경로 업데이트
             ShowAvailablePaths();
         }
+    }
+
+    /// <summary>
+    /// 마지막 선택 취소
+    /// </summary>
+    public void UndoLastSelection()
+    {
+        if (currentPath.Count <= 1 || IsPathCompleted()) return;
+
+        // 마지막 선택 제거
+        currentPath.RemoveAt(currentPath.Count - 1);
+
+        // 마지막 Flag 제거
+        if (pathFlags.Count > 0)
+        {
+            GameObject lastFlag = pathFlags[pathFlags.Count - 1];
+            if (lastFlag != null)
+                DestroyImmediate(lastFlag);
+            pathFlags.RemoveAt(pathFlags.Count - 1);
+        }
+
+        ClearFinalPath();
+        ShowAvailablePaths();
+
+        // 피드백 확장 지점
+        TriggerUndoFeedback();
+    }
+
+    /// <summary>
+    /// 해당 위치에서 Undo가 가능한지 확인 (마지막 위치만)
+    /// </summary>
+    private bool CanUndoAtPosition(Vector3Int position)
+    {
+        if (currentPath.Count < 2 || IsPathCompleted()) return false;
+        Vector3Int lastPosition = currentPath[currentPath.Count - 1];
+        return position == lastPosition;
+    }
+
+    /// <summary>
+    /// 경로가 완성되었는지 확인
+    /// </summary>
+    private bool IsPathCompleted()
+    {
+        if (currentPath.Count < 2 || currentCharacter == null) return false;
+        Vector3Int lastPosition = currentPath[currentPath.Count - 1];
+        return pathValidator.IsGoalPosition(lastPosition, currentCharacter);
     }
 
     /// <summary>
@@ -141,16 +170,13 @@ public class PathSelectionManager : MonoBehaviour
     /// </summary>
     private bool IsValidSelection(Vector3Int fromPos, Vector3Int toPos)
     {
-        // 기본 검증
         if (fromPos.x != toPos.x && fromPos.y != toPos.y) return false;
         if (fromPos == toPos) return false;
 
-        // 경로 유효성 검사
         if (!pathValidator.IsValidPosition(toPos) ||
             pathValidator.HasObstacleInPath(fromPos, toPos, currentCharacter))
             return false;
 
-        // 현재 표시된 노란 라인 범위 내에서만 선택 가능
         Vector3Int direction = new Vector3Int(
             toPos.x > fromPos.x ? 1 : (toPos.x < fromPos.x ? -1 : 0),
             toPos.y > fromPos.y ? 1 : (toPos.y < fromPos.y ? -1 : 0),
@@ -163,13 +189,11 @@ public class PathSelectionManager : MonoBehaviour
 
         int remaining = currentCharacter.GetRemainingSelections() - (currentPath.Count - 1);
 
-        // 마지막 선택일 때는 반드시 Goal이어야 함
+        // 마지막 선택은 Goal만
         if (remaining == 1)
-        {
             return pathValidator.IsGoalPosition(toPos, currentCharacter);
-        }
 
-        // 마지막-1 선택일 때는 Goal과 직선상에 있어야 함
+        // 마지막-1 선택은 Goal과 직선상
         if (remaining == 2)
         {
             var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
@@ -178,56 +202,19 @@ public class PathSelectionManager : MonoBehaviour
                 Vector3Int goalPos = goal.GetGridPosition();
                 if ((toPos.x == goalPos.x || toPos.y == goalPos.y) &&
                     !pathValidator.HasObstacleInPath(toPos, goalPos, currentCharacter))
-                {
                     return true;
-                }
             }
             return false;
-        }
-
-        // 마지막-2 선택일 때 추가 검증
-        if (remaining == 3)
-        {
-            // 해당 위치에서 한 번 더 이동했을 때 Goal과 직선상인 유효한 위치가 있는지 확인
-            bool canReachGoalLine = false;
-            var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
-
-            Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
-
-            foreach (var dir in directions)
-            {
-                var nextPositions = pathValidator.GetValidPositionsInDirection(toPos, dir, currentCharacter);
-
-                foreach (var nextPos in nextPositions)
-                {
-                    // 다음 위치가 Goal과 직선상에 있는지 확인
-                    foreach (var goal in availableGoals)
-                    {
-                        Vector3Int goalPos = goal.GetGridPosition();
-                        if ((nextPos.x == goalPos.x || nextPos.y == goalPos.y) &&
-                            !pathValidator.HasObstacleInPath(nextPos, goalPos, currentCharacter))
-                        {
-                            canReachGoalLine = true;
-                            break;
-                        }
-                    }
-                    if (canReachGoalLine) break;
-                }
-                if (canReachGoalLine) break;
-            }
-
-            if (!canReachGoalLine) return false;
         }
 
         return true;
     }
 
     /// <summary>
-    /// 현재 위치에서 가능한 모든 경로 표시
+    /// 가능한 경로 표시
     /// </summary>
     private void ShowAvailablePaths()
     {
-        // 기존 라인들 정리
         ClearAvailablePathLines();
 
         if (currentCharacter == null || currentPath.Count == 0) return;
@@ -237,7 +224,6 @@ public class PathSelectionManager : MonoBehaviour
 
         if (remainingSelections <= 0) return;
 
-        // 동서남북 방향 확인
         Vector3Int[] directions = { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
 
         foreach (Vector3Int direction in directions)
@@ -247,17 +233,14 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 특정 방향으로 가능한 경로 표시
+    /// 특정 방향 경로 표시
     /// </summary>
     private void ShowDirectionPath(Vector3Int startPos, Vector3Int direction, int remainingSelections)
     {
-        // PathValidator를 사용하여 해당 방향의 유효한 위치들 가져오기
         List<Vector3Int> pathPositions = pathValidator.GetValidPositionsInDirection(startPos, direction, currentCharacter);
 
-        // 마지막 선택 (remainingSelections == 1): Goal만 표시
         if (remainingSelections == 1)
         {
-            // Goal 위치만 필터링
             List<Vector3Int> goalOnlyPositions = new List<Vector3Int>();
             var availableGoals = pathValidator.GetAvailableGoalsForCharacter(currentCharacter);
 
@@ -265,13 +248,10 @@ public class PathSelectionManager : MonoBehaviour
             {
                 Vector3Int goalPos = goal.GetGridPosition();
                 if (pathPositions.Contains(goalPos))
-                {
                     goalOnlyPositions.Add(goalPos);
-                }
             }
             pathPositions = goalOnlyPositions;
         }
-        // 마지막-1 선택 (remainingSelections == 2): Goal과 직선상인 곳만
         else if (remainingSelections == 2)
         {
             pathPositions = pathValidator.FilterLastSelectionPositions(pathPositions, currentCharacter);
@@ -300,11 +280,9 @@ public class PathSelectionManager : MonoBehaviour
         line.sortingOrder = 15;
         line.useWorldSpace = true;
 
-        // 시작점 설정
         Vector3 startWorldPos = gridVisualizer.GridToWorldPosition(startPos);
         line.SetPosition(0, startWorldPos);
 
-        // 경로 점들 설정
         for (int i = 0; i < pathPositions.Count; i++)
         {
             Vector3 worldPos = gridVisualizer.GridToWorldPosition(pathPositions[i]);
@@ -323,8 +301,8 @@ public class PathSelectionManager : MonoBehaviour
 
         ClearAvailablePathLines();
         ShowFinalPath();
-        SetCharacterCompleted(currentCharacter); // 먼저 완료 설정
-        SaveCompletedPathToMemory(); // 경로 저장 및 알림
+        SetCharacterCompleted(currentCharacter);
+        SaveCompletedPathToMemory();
 
         // Goal 크기 복원
         if (levelLoader != null)
@@ -333,22 +311,18 @@ public class PathSelectionManager : MonoBehaviour
             foreach (var goal in allGoals)
             {
                 if (goal.CanUseGoal(currentCharacter.GetCharacterId()))
-                {
                     goal.transform.localScale = Vector3.one;
-                }
             }
         }
 
-        // 선택 상태 정리는 마지막에
         currentCharacter = null;
         currentPath.Clear();
 
-        // 시각적 정리만 1초 후
         Invoke(nameof(VisualOnlyCleanup), 1f);
     }
 
     /// <summary>
-    /// 완성된 경로를 메모리에 저장 (이동 시스템에서 사용)
+    /// 완성된 경로를 메모리에 저장
     /// </summary>
     private void SaveCompletedPathToMemory()
     {
@@ -357,71 +331,36 @@ public class PathSelectionManager : MonoBehaviour
         string characterId = currentCharacter.GetCharacterId();
         completedPaths[characterId] = new List<Vector3Int>(currentPath);
 
-        Debug.Log($"Saved path for {characterId}: {string.Join(" -> ", currentPath)}");
-
-        // MovementGameManager에게 경로 완성 알림
-        NotifyPathCompleted();
-    }
-
-    /// <summary>
-    /// MovementGameManager에게 경로 완성 알림
-    /// </summary>
-    private void NotifyPathCompleted()
-    {
-
         var gameManager = FindFirstObjectByType<MovementGameManager>();
-
-
         if (gameManager != null)
-        {
             gameManager.OnPathCompleted();
-        }
-        else
-        {
-        }
     }
 
     /// <summary>
-    /// 모든 완성된 경로 반환
-    /// </summary>
-    public Dictionary<string, List<Vector3Int>> GetCompletedPaths()
-    {
-        return new Dictionary<string, List<Vector3Int>>(completedPaths);
-    }
-
-    /// <summary>
-    /// 특정 캐릭터의 완성된 경로 반환
-    /// </summary>
-    public List<Vector3Int> GetCompletedPath(string characterId)
-    {
-        if (completedPaths.ContainsKey(characterId))
-            return new List<Vector3Int>(completedPaths[characterId]);
-        return null;
-    }
-
-    /// <summary>
-    /// 모든 경로 초기화
-    /// </summary>
-    public void ClearAllCompletedPaths()
-    {
-        completedPaths.Clear();
-    }
-
-    /// <summary>
-    /// 잘못된 선택에 대한 피드백 표시
+    /// 잘못된 선택에 대한 피드백
     /// </summary>
     private void ShowInvalidSelectionFeedback(Vector3Int gridPosition)
     {
-        // 진동 또는 사운드 효과 (모바일)
         if (Application.isMobilePlatform)
-        {
             Handheld.Vibrate();
-        }
 
-        // 시각적 피드백
         StartCoroutine(ShowInvalidPositionEffect(gridPosition));
+    }
 
-        Debug.Log($"Invalid selection at {gridPosition}");
+    /// <summary>
+    /// Undo 피드백 (확장 가능)
+    /// </summary>
+    private void TriggerUndoFeedback()
+    {
+        // 진동
+        if (Application.isMobilePlatform)
+            Handheld.Vibrate();
+
+        // 효과음 확장 지점
+        // AudioManager.PlayUndoSound();
+
+        // 시각 효과 확장 지점
+        // EffectManager.PlayUndoEffect();
     }
 
     /// <summary>
@@ -431,7 +370,6 @@ public class PathSelectionManager : MonoBehaviour
     {
         if (gridVisualizer == null) yield break;
 
-        // 빨간색 임시 마커 생성
         GameObject tempMarker = new GameObject("InvalidMarker");
         tempMarker.transform.position = gridVisualizer.GridToWorldPosition(gridPosition);
 
@@ -440,10 +378,8 @@ public class PathSelectionManager : MonoBehaviour
         renderer.color = invalidPathColor;
         renderer.sortingOrder = 25;
 
-        // 크기 애니메이션
         Vector3 originalScale = Vector3.one * 0.5f;
         Vector3 targetScale = Vector3.one * 1.2f;
-
         float duration = 0.3f;
         float elapsed = 0f;
 
@@ -452,7 +388,6 @@ public class PathSelectionManager : MonoBehaviour
             float t = elapsed / duration;
             tempMarker.transform.localScale = Vector3.Lerp(originalScale, targetScale, t);
             renderer.color = Color.Lerp(invalidPathColor, Color.clear, t);
-
             elapsed += Time.deltaTime;
             yield return null;
         }
@@ -461,7 +396,7 @@ public class PathSelectionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 간단한 정사각형 스프라이트 생성 (임시 마커용)
+    /// 간단한 정사각형 스프라이트 생성
     /// </summary>
     private Sprite CreateSimpleSquareSprite()
     {
@@ -476,19 +411,8 @@ public class PathSelectionManager : MonoBehaviour
         return Sprite.Create(texture, new Rect(0, 0, 32, 32), Vector2.one * 0.5f);
     }
 
-    /// <summary>
-    /// 캐릭터를 완료 상태로 설정
-    /// </summary>
-    private void SetCharacterCompleted(GamePiece character)
-    {
-        character.SetCompleted(true);
-    }
-
-    private void VisualOnlyCleanup()
-    {
-        ClearFinalPath();
-        ClearFlags();
-    }
+    private void SetCharacterCompleted(GamePiece character) => character.SetCompleted(true);
+    private void VisualOnlyCleanup() { ClearFinalPath(); ClearFlags(); }
 
     /// <summary>
     /// Flag 생성
@@ -541,72 +465,43 @@ public class PathSelectionManager : MonoBehaviour
         finalPathLine.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// 모든 시각적 요소 정리
-    /// </summary>
-    private void ClearAllVisuals()
-    {
-        ClearAvailablePathLines();
-        ClearFlags();
-        ClearFinalPath();
-    }
+    // 정리 메서드들
+    private void ClearAllVisuals() { ClearAvailablePathLines(); ClearFlags(); ClearFinalPath(); }
 
-    /// <summary>
-    /// 가능한 경로 라인들 정리
-    /// </summary>
     private void ClearAvailablePathLines()
     {
         foreach (var line in availablePathLines)
         {
-            if (line != null)
-                DestroyImmediate(line.gameObject);
+            if (line != null) DestroyImmediate(line.gameObject);
         }
         availablePathLines.Clear();
     }
 
-    /// <summary>
-    /// Flag들 정리
-    /// </summary>
     private void ClearFlags()
     {
         foreach (var flag in pathFlags)
         {
-            if (flag != null)
-                DestroyImmediate(flag.gameObject);
+            if (flag != null) DestroyImmediate(flag.gameObject);
         }
         pathFlags.Clear();
     }
 
-    /// <summary>
-    /// 최종 경로 라인 정리
-    /// </summary>
     private void ClearFinalPath()
     {
-        if (finalPathLine != null)
-            finalPathLine.gameObject.SetActive(false);
+        if (finalPathLine != null) finalPathLine.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// 현재 경로 반환
-    /// </summary>
-    public List<Vector3Int> GetCurrentPath()
-    {
-        return new List<Vector3Int>(currentPath);
-    }
+    // 공개 메서드들
+    public List<Vector3Int> GetCurrentPath() => new List<Vector3Int>(currentPath);
+    public bool IsSelectingPath() => currentCharacter != null && currentPath.Count > 0;
+    public GamePiece GetCurrentCharacter() => currentCharacter;
+    public Dictionary<string, List<Vector3Int>> GetCompletedPaths() => new Dictionary<string, List<Vector3Int>>(completedPaths);
+    public void ClearAllCompletedPaths() => completedPaths.Clear();
 
-    /// <summary>
-    /// 경로 선택 중인지 확인
-    /// </summary>
-    public bool IsSelectingPath()
+    public List<Vector3Int> GetCompletedPath(string characterId)
     {
-        return currentCharacter != null && currentPath.Count > 0;
-    }
-
-    /// <summary>
-    /// 현재 선택된 캐릭터 반환
-    /// </summary>
-    public GamePiece GetCurrentCharacter()
-    {
-        return currentCharacter;
+        if (completedPaths.ContainsKey(characterId))
+            return new List<Vector3Int>(completedPaths[characterId]);
+        return null;
     }
 }
